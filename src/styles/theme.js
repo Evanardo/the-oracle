@@ -1,0 +1,130 @@
+import { StyleSheet } from 'react-native';
+import { SCREEN_WIDTH, SCREEN_HEIGHT } from '../utils/constants';
+
+export const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#121212' },
+  centerStage: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
+  screenHeader: { padding: 15, paddingTop: 40, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#2a2a2a' },
+  screenTitle: { fontSize: 20, fontWeight: 'bold', color: '#fff', letterSpacing: 1, marginBottom: 12 },
+  deckFilterRow: { flexDirection: 'row', backgroundColor: '#1c1c1e', padding: 4, borderRadius: 20, borderWidth: 1, borderColor: '#333' },
+  deckFilterChip: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 16 },
+  deckFilterChipActive: { backgroundColor: '#bf5af2' },
+  deckFilterText: { color: '#888', fontSize: 13, fontWeight: '600' },
+  deckFilterTextActive: { color: '#fff' },
+  subText: { color: '#888', fontSize: 16, textAlign: 'center' },
+  
+  // Stack UI
+  cardContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 10 },
+  emptyState: { alignItems: 'center', justifyContent: 'center' },
+  emptyStateText: { color: '#fff', fontSize: 24, fontWeight: 'bold', marginTop: 15 },
+  emptyStateSubtext: { color: '#888', fontSize: 14, marginTop: 10, textAlign: 'center' },
+  
+  // Card UI & 3D Flip
+  card: { position: 'absolute', width: SCREEN_WIDTH * 0.9, height: SCREEN_HEIGHT * 0.65, backgroundColor: '#1e1e1e', borderRadius: 20, borderWidth: 1, borderColor: '#333', shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 10, elevation: 5, overflow: 'hidden' },
+  cardFace: { position: 'absolute', width: '100%', height: '100%', backfaceVisibility: 'hidden' },
+  cardBackFace: { backgroundColor: '#181818', borderRadius: 20 },
+  cardContentLayout: { flex: 1, justifyContent: 'flex-end' },
+  artImage: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' },
+  artPlaceholder: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#252525', justifyContent: 'center', alignItems: 'center' },
+  gradientOverlay: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '50%', backgroundColor: 'rgba(0,0,0,0.6)' },
+  
+  // Score Badge & Buttons
+  scoreBadge: { position: 'absolute', top: 15, left: 15, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.75)', borderWidth: 1, borderColor: '#ffd60a', paddingVertical: 5, paddingHorizontal: 10, borderRadius: 20, zIndex: 10 },
+  scoreBadgeText: { color: '#ffd60a', fontSize: 13, fontWeight: 'bold' },
+  infoFlipButton: { position: 'absolute', top: 15, right: 15, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.65)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, zIndex: 10 },
+  infoFlipButtonText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+  
+  cardFooter: { padding: 20, backgroundColor: 'transparent' },
+  cardTitle: { fontSize: 32, fontWeight: 'bold', color: '#fff', marginBottom: 5, textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3 },
+  cardDeveloper: { fontSize: 16, color: '#ddd', marginBottom: 12, textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3 },
+  footerPillRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', alignItems: 'center' },
+  tagPill: { backgroundColor: 'rgba(0,0,0,0.7)', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 15, alignSelf: 'flex-start', borderWidth: 1, borderColor: '#444' },
+  tagText: { color: '#ddd', fontSize: 13, fontWeight: '600' },
+  platformPill: { backgroundColor: 'rgba(191, 90, 242, 0.2)', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 15, borderWidth: 1, borderColor: '#bf5af2' },
+  platformText: { color: '#bf5af2', fontSize: 12, fontWeight: '600' },
+
+  // Card Back Layout
+  cardBackLayout: { flex: 1, padding: 25, justifyContent: 'space-between' },
+  cardBackHeader: { borderBottomWidth: 1, borderBottomColor: '#2a2a2a', paddingBottom: 15, marginBottom: 15 },
+  cardBackTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  cardBackTitle: { fontSize: 24, fontWeight: 'bold', color: '#fff', flex: 1, marginRight: 10, marginBottom: 4 },
+  cardBackScoreBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#2b2310', borderWidth: 1, borderColor: '#ffd60a', paddingVertical: 4, paddingHorizontal: 8, borderRadius: 12 },
+  cardBackScoreText: { color: '#ffd60a', fontSize: 13, fontWeight: 'bold' },
+  cardBackDeveloper: { fontSize: 15, color: '#888', fontWeight: '500', marginBottom: 10 },
+  similarBox: { backgroundColor: '#211529', borderWidth: 1, borderColor: '#5c227e', borderRadius: 12, padding: 12, marginBottom: 15, flexDirection: 'row', alignItems: 'center' },
+  similarText: { color: '#e0c0f8', fontSize: 13, flex: 1, lineHeight: 18 },
+  galleryContainer: { marginTop: 5, width: '100%', height: 160, borderRadius: 10, overflow: 'hidden', backgroundColor: '#252525', position: 'relative' },
+  galleryImage: { width: '100%', height: '100%' },
+  galleryNavLeft: { position: 'absolute', left: 5, top: 0, bottom: 0, justifyContent: 'center', padding: 5 },
+  galleryNavRight: { position: 'absolute', right: 5, top: 0, bottom: 0, justifyContent: 'center', padding: 5 },
+  galleryDotsContainer: { position: 'absolute', bottom: 10, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 6, alignItems: 'center' },
+  galleryDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.4)' },
+  galleryDotActive: { backgroundColor: '#fff', width: 8, height: 8, borderRadius: 4 },
+  cardBackScroll: { flex: 1, marginVertical: 5 },
+  cardBackSectionTitle: { color: '#666', fontSize: 11, fontWeight: 'bold', letterSpacing: 1, marginBottom: 8, marginTop: 10 },
+  cardBackDescription: { color: '#ccc', fontSize: 14, lineHeight: 21 },
+  flipBackFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#251b33', borderWidth: 1, borderColor: '#bf5af2', paddingVertical: 12, borderRadius: 14, marginTop: 10 },
+  flipBackFooterText: { color: '#bf5af2', fontSize: 14, fontWeight: 'bold' },
+
+  // Overlays
+  overlayRight: { position: 'absolute', top: 40, left: 40, transform: [{ rotate: '-15deg' }] },
+  overlayTextRight: { borderWidth: 4, borderColor: '#32d74b', color: '#32d74b', fontSize: 28, fontWeight: 'bold', padding: 8, borderRadius: 10, letterSpacing: 2, backgroundColor: 'rgba(0,0,0,0.5)' },
+  overlayLeft: { position: 'absolute', top: 40, right: 40, transform: [{ rotate: '15deg' }] },
+  overlayTextLeft: { borderWidth: 4, borderColor: '#ff453a', color: '#ff453a', fontSize: 28, fontWeight: 'bold', padding: 8, borderRadius: 10, letterSpacing: 2, backgroundColor: 'rgba(0,0,0,0.5)' },
+  overlayUp: { position: 'absolute', bottom: 180, alignSelf: 'center' },
+  overlayTextUp: { borderWidth: 4, borderColor: '#bf5af2', color: '#bf5af2', fontSize: 28, fontWeight: 'bold', padding: 8, borderRadius: 10, letterSpacing: 2, backgroundColor: 'rgba(0,0,0,0.5)' },
+  overlayDown: { position: 'absolute', top: 120, alignSelf: 'center' },
+  overlayTextDown: { borderWidth: 4, borderColor: '#0a84ff', color: '#0a84ff', fontSize: 28, fontWeight: 'bold', padding: 8, borderRadius: 10, letterSpacing: 2, backgroundColor: 'rgba(0,0,0,0.5)' },
+
+  // Oracle UI
+  oracleFormContainer: { flex: 1, padding: 20, paddingTop: 40 },
+  oracleLabel: { color: '#888', fontSize: 14, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 15, marginTop: 20 },
+  sourceToggleRow: { flexDirection: 'row', backgroundColor: '#1e1e1e', borderRadius: 12, padding: 4, borderWidth: 1, borderColor: '#333' },
+  sourceToggle: { flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: 8 },
+  sourceToggleActive: { backgroundColor: '#333' },
+  sourceToggleText: { color: '#888', fontWeight: 'bold' },
+  sourceToggleTextActive: { color: '#fff' },
+  vibeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  vibeChip: { backgroundColor: '#1e1e1e', borderWidth: 1, borderColor: '#333', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 20 },
+  vibeChipActive: { backgroundColor: '#bf5af2', borderColor: '#bf5af2' },
+  vibeChipText: { color: '#aaa', fontWeight: '600' },
+  vibeChipTextActive: { color: '#fff' },
+  oracleButton: { backgroundColor: '#bf5af2', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 18, borderRadius: 16, shadowColor: '#bf5af2', shadowOpacity: 0.4, shadowOffset: { width: 0, height: 5 }, shadowRadius: 10 },
+  oracleButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold', letterSpacing: 1 },
+  oracleResultContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
+  errorText: { color: '#ff453a', marginTop: 20, textAlign: 'center', fontSize: 15 },
+
+  // Library Tabs (Segmented Control)
+  libraryTabsRow: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 15, gap: 10 },
+  libraryTab: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20, backgroundColor: '#1e1e1e', borderWidth: 1, borderColor: '#333' },
+  libraryTabActive: { backgroundColor: '#bf5af2', borderColor: '#bf5af2' },
+  libraryTabText: { color: '#888', fontWeight: '600', fontSize: 13 },
+  libraryTabTextActive: { color: '#fff' },
+
+  // Timeline UI (Library Tab)
+  timelineItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 15, backgroundColor: '#1e1e1e', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#2a2a2a', overflow: 'hidden' },
+  timelineImage: { width: 60, height: 80, borderRadius: 8, marginRight: 15, backgroundColor: '#252525' },
+  timelineImagePlaceholder: { width: 60, height: 80, borderRadius: 8, marginRight: 15, backgroundColor: '#252525', justifyContent: 'center', alignItems: 'center' },
+  timelineContent: { flex: 1, justifyContent: 'center' },
+  timelineHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  timelineTitle: { color: '#fff', fontSize: 16, fontWeight: 'bold', flexShrink: 1, marginRight: 10 },
+  timelineSub: { color: '#888', fontSize: 13, marginBottom: 4 },
+  timelineDate: { color: '#555', fontSize: 11 },
+  statusBadge: { borderWidth: 1, paddingVertical: 2, paddingHorizontal: 6, borderRadius: 8, alignSelf: 'flex-start' },
+  statusBadgeText: { fontSize: 9, fontWeight: 'bold', letterSpacing: 1 },
+
+  // Passport Modal
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'flex-end' },
+  passportContainer: { backgroundColor: '#1e1e1e', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 25, maxHeight: SCREEN_HEIGHT * 0.8, borderWidth: 1, borderColor: '#333' },
+  passportHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 },
+  passportTitle: { fontSize: 28, fontWeight: 'bold', color: '#fff', flex: 1, marginRight: 10 },
+  passportDev: { fontSize: 16, color: '#888', marginBottom: 15 },
+  passportDesc: { fontSize: 15, color: '#ccc', lineHeight: 22, marginBottom: 20 },
+  divider: { height: 1, backgroundColor: '#333', marginVertical: 15 },
+  specsHeader: { color: '#666', fontSize: 12, fontWeight: 'bold', letterSpacing: 1, marginBottom: 10 },
+  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#2a2a2a' },
+  detailLabel: { color: '#aaa', fontSize: 15 },
+  detailValue: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  trojanBox: { marginTop: 25, padding: 15, backgroundColor: '#161616', borderRadius: 10, borderStyle: 'dashed', borderWidth: 1, borderColor: '#333', flexDirection: 'row', alignItems: 'center', gap: 10 },
+  trojanText: { color: '#666', fontSize: 13, flex: 1 }
+});
