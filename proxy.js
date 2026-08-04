@@ -1,9 +1,11 @@
 const http = require('http');
 const https = require('https');
 
+require('dotenv').config();
+
 const PORT = 3001;
-const IGDB_CLIENT_ID = 'f1pxzxrb2e1elgcf9t129qyb2ruzt3';
-const IGDB_ACCESS_TOKEN = 'kkzfrkani8ulbb2qbycrca5tam4kub';
+const IGDB_CLIENT_ID = process.env.IGDB_CLIENT_ID;
+const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN;
 
 const server = http.createServer((req, res) => {
   // Allow browser CORS
@@ -22,8 +24,8 @@ const server = http.createServer((req, res) => {
   req.on('end', () => {
     const defaultQuery = `
       fields name, summary, rating, rating_count, first_release_date, cover.image_id, genres.name, platforms.name, game_modes.name, themes.name, player_perspectives.name, involved_companies.company.name, involved_companies.developer, similar_games.name; 
-      where rating > 75 & cover != null; 
-      sort popularity desc; 
+      where rating > 80 & rating_count > 100 & cover != null; 
+      sort rating_count desc; 
       limit 25;
     `;
 

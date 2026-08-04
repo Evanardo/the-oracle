@@ -12,7 +12,8 @@ import {
   Modal,
   ScrollView,
   Image,
-  ActivityIndicator
+  ActivityIndicator,
+  Platform
 } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -20,11 +21,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 
 // ==========================================
-// IGDB API CONFIGURATION
-// Paste your Twitch credentials here for the MVP
+// API CONFIGURATION
+// Credentials moved to server-side proxy
 // ==========================================
-const IGDB_CLIENT_ID = 'f1pxzxrb2e1elgcf9t129qyb2ruzt3';
-const IGDB_ACCESS_TOKEN = 'kkzfrkani8ulbb2qbycrca5tam4kub';
 
 const Tab = createBottomTabNavigator();
 
@@ -34,75 +33,7 @@ const SWIPE_THRESHOLD = 100;
 const SWIPE_OUT_DURATION = 250;
 const VIBES = ['Relaxing', 'Intense', 'Sweaty', 'Brain-Off'];
 
-// Curated fallback games deck used as a bulletproof safety net if network/proxy is unreachable
-const FALLBACK_GAMES = [
-  {
-    id: 'fb-1',
-    title: 'Elden Ring',
-    developer: 'FromSoftware',
-    tags: 'Action • RPG',
-    vibe: 'Intense',
-    time: '60+ hrs',
-    isPauseable: false,
-    description: 'THE CRITICALLY ACCLAIMED FANTASY ACTION RPG. Rise, Tarnished, and be guided by grace to brandish the power of the Elden Ring and become an Elden Lord in the Lands Between.',
-    coverUrl: 'https://images.igdb.com/igdb/image/upload/t_720p/co4jni.jpg'
-  },
-  {
-    id: 'fb-2',
-    title: 'The Legend of Zelda: Tears of the Kingdom',
-    developer: 'Nintendo',
-    tags: 'Adventure • Action',
-    vibe: 'Relaxing',
-    time: '50+ hrs',
-    isPauseable: true,
-    description: 'An epic adventure across the land and skies of Hyrule awaits in The Legend of Zelda: Tears of the Kingdom.',
-    coverUrl: 'https://images.igdb.com/igdb/image/upload/t_720p/co5vzv.jpg'
-  },
-  {
-    id: 'fb-3',
-    title: 'Hades II',
-    developer: 'Supergiant Games',
-    tags: 'Roguelike • Action',
-    vibe: 'Sweaty',
-    time: '30+ hrs',
-    isPauseable: true,
-    description: 'Battle beyond the Underworld using dark sorcery to take on the Titan of Time.',
-    coverUrl: 'https://images.igdb.com/igdb/image/upload/t_720p/co5xar.jpg'
-  },
-  {
-    id: 'fb-4',
-    title: 'Baldur\'s Gate 3',
-    developer: 'Larian Studios',
-    tags: 'RPG • Strategy',
-    vibe: 'Brain-Off',
-    time: '100+ hrs',
-    isPauseable: true,
-    description: 'An expansive, story-rich RPG set in the universe of Dungeons & Dragons.',
-    coverUrl: 'https://images.igdb.com/igdb/image/upload/t_720p/co670h.jpg'
-  },
-  {
-    id: 'fb-5',
-    title: 'Cyberpunk 2077',
-    developer: 'CD Projekt Red',
-    tags: 'Action • Sci-Fi',
-    vibe: 'Intense',
-    time: '40+ hrs',
-    isPauseable: true,
-    description: 'An open-world, action-adventure RPG set in the megalopolis of Night City.',
-    coverUrl: 'https://images.igdb.com/igdb/image/upload/t_720p/co801k.jpg'
-  },
-  {
-    id: 'fb-6',
-    title: 'Stardew Valley',
-    developer: 'ConcernedApe',
-    tags: 'Simulation • RPG',
-    vibe: 'Relaxing',
-    time: '40+ hrs',
-    isPauseable: true,
-    description: 'You\'ve inherited your grandfather\'s old farm plot in Stardew Valley. Armed with hand-me-down tools and a few coins, set out to begin your new life!',
-    coverUrl: 'https://images.igdb.com/igdb/image/upload/t_720p/co1vcp.jpg'
-  }
-];
+// Offline fallback games removed as requested
 
 // Helper to fetch with timeout so requests fail fast if blocked or unreachable
 const fetchWithTimeout = async (url, options = {}, timeoutMs = 3000) => {
@@ -125,6 +56,8 @@ const fetchWithTimeout = async (url, options = {}, timeoutMs = 3000) => {
 const StackScreen = ({ library, onSaveToLibrary }) => {
   const [gamesStack, setGamesStack] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [deckFilter, setDeckFilter] = useState('popular'); // 'popular' | 'discover'
   const [currentIndex, setCurrentIndex] = useState(0);
   const position = useRef(new Animated.ValueXY()).current;
 
@@ -140,12 +73,12 @@ const StackScreen = ({ library, onSaveToLibrary }) => {
     currentIndexRef.current = currentIndex;
   }, [currentIndex]);
 
-  // Fetch from IGDB on mount
+  // Fetch from IGDB on mount & deckFilter change
   useEffect(() => {
-    fetchIGDBGames();
-  }, []);
+    fetchIGDBGames(deckFilter);
+  }, [deckFilter]);
 
-  const fetchIGDBGames = async () => {
+  const fetchIGDBGames = async (filterMode = deckFilter) => {
     setLoading(true);
 
     // Dynamically resolve hostname for Mobile Safari / LAN access (e.g. 192.168.x.x:3001)
@@ -155,9 +88,20 @@ const StackScreen = ({ library, onSaveToLibrary }) => {
 
     const endpoints = [
       `http://${currentHost}:3001`,
-      'http://localhost:3001',
-      'https://api.igdb.com/v4/games'
+      'http://localhost:3001'
     ];
+
+    // Exclude games already saved in library from API query
+    const savedIds = (library || [])
+      .map(g => g.id)
+      .filter(id => id && /^\d+$/.test(id)); // Ensure only valid numeric IGDB IDs are passed
+    const excludeClause = savedIds.length > 0 ? ` & id != (${savedIds.join(',')})` : '';
+
+    // Popular mode sorts by rating_count desc (review volume) to show famous blockbusters first
+    // Discover mode sorts by rating desc for acclaimed hidden gems
+    const bodyQuery = filterMode === 'popular'
+      ? `fields name, summary, rating, rating_count, first_release_date, cover.image_id, screenshots.image_id, genres.name, platforms.name, game_modes.name, themes.name, player_perspectives.name, involved_companies.company.name, involved_companies.developer, similar_games.name; where rating > 80 & rating_count > 100 & cover != null${excludeClause}; sort rating_count desc; limit 25;`
+      : `fields name, summary, rating, rating_count, first_release_date, cover.image_id, screenshots.image_id, genres.name, platforms.name, game_modes.name, themes.name, player_perspectives.name, involved_companies.company.name, involved_companies.developer, similar_games.name; where rating > 80 & rating_count > 15 & cover != null${excludeClause}; sort rating desc; limit 25;`;
 
     let successData = null;
 
@@ -167,16 +111,9 @@ const StackScreen = ({ library, onSaveToLibrary }) => {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
-            'Content-Type': 'text/plain',
-            'Client-ID': IGDB_CLIENT_ID,
-            'Authorization': `Bearer ${IGDB_ACCESS_TOKEN}`,
+            'Content-Type': 'text/plain'
           },
-          body: `
-            fields name, summary, rating, rating_count, first_release_date, cover.image_id, genres.name, platforms.name, game_modes.name, themes.name, player_perspectives.name, involved_companies.company.name, involved_companies.developer, similar_games.name; 
-            where rating > 75 & cover != null; 
-            sort popularity desc; 
-            limit 25;
-          `
+          body: bodyQuery
         }, 3000);
 
         if (response.ok) {
@@ -192,11 +129,16 @@ const StackScreen = ({ library, onSaveToLibrary }) => {
     }
 
     if (successData) {
-      const formattedGames = successData.map(mapIGDBToAppFormat);
+      const libraryIdSet = new Set((library || []).map(g => g.id));
+      const formattedGames = successData
+        .map(mapIGDBToAppFormat)
+        .filter(game => !libraryIdSet.has(game.id));
+
       setGamesStack(formattedGames);
+      setError(false);
     } else {
-      console.warn("Using curated fallback deck for Mobile Safari / Offline support.");
-      setGamesStack(FALLBACK_GAMES);
+      setError(true);
+      setGamesStack([]);
     }
     
     setCurrentIndex(0);
@@ -244,6 +186,15 @@ const StackScreen = ({ library, onSaveToLibrary }) => {
       ? `https://images.igdb.com/igdb/image/upload/t_720p/${igdbGame.cover.image_id}.jpg` 
       : null;
 
+    // Screenshots
+    let screenshots = igdbGame.screenshots
+      ? igdbGame.screenshots.map(s => `https://images.igdb.com/igdb/image/upload/t_720p/${s.image_id}.jpg`)
+      : [];
+      
+    if (screenshots.length === 0 && coverUrl) {
+      screenshots = [coverUrl];
+    }
+
     return {
       id: igdbGame.id ? igdbGame.id.toString() : Math.random().toString(),
       title: igdbGame.name || 'Untitled Game',
@@ -259,7 +210,8 @@ const StackScreen = ({ library, onSaveToLibrary }) => {
       time: 'Flexible', 
       isPauseable: true,
       description: igdbGame.summary || 'No description available.',
-      coverUrl: coverUrl
+      coverUrl: coverUrl,
+      screenshots: screenshots
     };
   };
 
@@ -309,6 +261,7 @@ const StackScreen = ({ library, onSaveToLibrary }) => {
     if (direction === 'right') status = 'played';
     if (direction === 'down') status = 'backlog';
     if (direction === 'up') status = 'wishlist';
+    if (direction === 'left') status = 'passed';
 
     if (status && currentGame) {
       onSaveToLibrary({
@@ -351,12 +304,25 @@ const StackScreen = ({ library, onSaveToLibrary }) => {
       );
     }
 
+    if (error) {
+      return (
+        <View style={styles.emptyState}>
+          <Ionicons name="wifi-outline" size={64} color="#ff453a" />
+          <Text style={styles.emptyStateText}>No Connection</Text>
+          <Text style={styles.emptyStateSubtext}>The Stack requires an active internet connection to discover new games.</Text>
+          <TouchableOpacity onPress={() => fetchIGDBGames(deckFilter)} style={{marginTop: 20}}>
+            <Text style={{color: '#bf5af2', fontWeight: 'bold', fontSize: 16}}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
     if (currentIndex >= gamesStack.length) {
       return (
         <View style={styles.emptyState}>
           <Ionicons name="checkmark-done-circle-outline" size={64} color="#32d74b" />
           <Text style={styles.emptyStateText}>Stack Sorted!</Text>
-          <TouchableOpacity onPress={fetchIGDBGames} style={{marginTop: 20}}>
+          <TouchableOpacity onPress={() => fetchIGDBGames(deckFilter)} style={{marginTop: 20}}>
             <Text style={{color: '#bf5af2', fontWeight: 'bold', fontSize: 16}}>Fetch More Games</Text>
           </TouchableOpacity>
         </View>
@@ -390,6 +356,39 @@ const StackScreen = ({ library, onSaveToLibrary }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.screenHeader}>
         <Text style={styles.screenTitle}>Discover</Text>
+
+        {/* Deck Mode Filter Selector */}
+        <View style={styles.deckFilterRow}>
+          <TouchableOpacity 
+            style={[styles.deckFilterChip, deckFilter === 'popular' && styles.deckFilterChipActive]}
+            onPress={() => setDeckFilter('popular')}
+          >
+            <Ionicons 
+              name="flame" 
+              size={13} 
+              color={deckFilter === 'popular' ? '#fff' : '#888'} 
+              style={{ marginRight: 5 }} 
+            />
+            <Text style={[styles.deckFilterText, deckFilter === 'popular' && styles.deckFilterTextActive]}>
+              Top Blockbusters
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.deckFilterChip, deckFilter === 'discover' && styles.deckFilterChipActive]}
+            onPress={() => setDeckFilter('discover')}
+          >
+            <Ionicons 
+              name="sparkles" 
+              size={13} 
+              color={deckFilter === 'discover' ? '#fff' : '#888'} 
+              style={{ marginRight: 5 }} 
+            />
+            <Text style={[styles.deckFilterText, deckFilter === 'discover' && styles.deckFilterTextActive]}>
+              Hidden Gems
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
       <View style={styles.cardContainer}>{renderCards()}</View>
     </SafeAreaView>
@@ -539,6 +538,44 @@ const CardContent = ({ item, onFlip }) => (
   </View>
 );
 
+const ScreenshotGallery = ({ screenshots }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  
+  if (!screenshots || screenshots.length === 0) return null;
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % screenshots.length);
+  };
+
+  const handlePrev = () => {
+    setCurrentIndex((prev) => (prev - 1 + screenshots.length) % screenshots.length);
+  };
+
+  return (
+    <View style={styles.galleryContainer}>
+      <Image source={{ uri: screenshots[currentIndex] }} style={styles.galleryImage} resizeMode="cover" />
+      
+      {screenshots.length > 1 && (
+        <>
+          <TouchableOpacity style={styles.galleryNavLeft} onPress={handlePrev}>
+            <Ionicons name="chevron-back-circle" size={32} color="rgba(255,255,255,0.7)" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.galleryNavRight} onPress={handleNext}>
+            <Ionicons name="chevron-forward-circle" size={32} color="rgba(255,255,255,0.7)" />
+          </TouchableOpacity>
+
+          <View style={styles.galleryDotsContainer}>
+            {screenshots.map((_, i) => (
+              <View key={i} style={[styles.galleryDot, i === currentIndex && styles.galleryDotActive]} />
+            ))}
+          </View>
+        </>
+      )}
+    </View>
+  );
+};
+
 const CardBackContent = ({ item, onFlip }) => (
   <View style={styles.cardBackLayout}>
     <View style={styles.cardBackHeader}>
@@ -574,6 +611,13 @@ const CardBackContent = ({ item, onFlip }) => (
           </Text>
         </View>
       ) : null}
+
+      {item.screenshots && item.screenshots.length > 0 && (
+        <View style={{ marginBottom: 15 }}>
+          <Text style={styles.cardBackSectionTitle}>SCREENSHOTS</Text>
+          <ScreenshotGallery screenshots={item.screenshots} />
+        </View>
+      )}
 
       <Text style={styles.cardBackSectionTitle}>GAME OVERVIEW</Text>
       <Text style={styles.cardBackDescription}>{item.description}</Text>
@@ -717,13 +761,15 @@ const LibraryScreen = ({ library }) => {
     return { color: '#888', borderColor: '#888', label: status };
   };
 
+  const visibleLibrary = library.filter(g => g.status !== 'passed');
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.screenHeader}>
         <Text style={styles.screenTitle}>Vault & Timeline</Text>
       </View>
 
-      {library.length === 0 ? (
+      {visibleLibrary.length === 0 ? (
         <View style={styles.centerStage}>
           <Ionicons name="archive-outline" size={64} color="#333" />
           <Text style={styles.emptyStateText}>Library Empty</Text>
@@ -731,7 +777,7 @@ const LibraryScreen = ({ library }) => {
         </View>
       ) : (
         <FlatList
-          data={library}
+          data={visibleLibrary}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ padding: 20 }}
           renderItem={({ item }) => {
@@ -848,11 +894,21 @@ export default function App() {
               backgroundColor: '#121212',
               borderTopWidth: 1,
               borderTopColor: '#2a2a2a',
-              paddingTop: 10,
-              paddingBottom: 30,
-              height: 90,
+              height: Platform.OS === 'ios' ? 85 : 65,
+              paddingTop: 6,
+              paddingBottom: Platform.OS === 'ios' ? 24 : 4,
             },
-            tabBarLabelStyle: { fontSize: 12, fontWeight: '600', marginTop: 5 }
+            tabBarItemStyle: {
+              justifyContent: 'center',
+              alignItems: 'center',
+              paddingVertical: 2,
+            },
+            tabBarLabelStyle: { 
+              fontSize: 11, 
+              fontWeight: '600', 
+              marginTop: 1,
+              marginBottom: 2,
+            }
           })}
         >
           <Tab.Screen name="Stack">
@@ -874,10 +930,13 @@ export default function App() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#121212' },
   centerStage: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-  screenHeader: { padding: 20, paddingTop: 40, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#2a2a2a' },
-  screenTitle: { fontSize: 20, fontWeight: 'bold', color: '#fff', letterSpacing: 1 },
-  fallbackBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#261b33', borderColor: '#bf5af2', borderWidth: 1, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 12, marginTop: 6 },
-  fallbackBadgeText: { color: '#bf5af2', fontSize: 11, fontWeight: '600' },
+  screenHeader: { padding: 15, paddingTop: 40, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#2a2a2a' },
+  screenTitle: { fontSize: 20, fontWeight: 'bold', color: '#fff', letterSpacing: 1, marginBottom: 12 },
+  deckFilterRow: { flexDirection: 'row', backgroundColor: '#1c1c1e', padding: 4, borderRadius: 20, borderWidth: 1, borderColor: '#333' },
+  deckFilterChip: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 16 },
+  deckFilterChipActive: { backgroundColor: '#bf5af2' },
+  deckFilterText: { color: '#888', fontSize: 13, fontWeight: '600' },
+  deckFilterTextActive: { color: '#fff' },
   subText: { color: '#888', fontSize: 16, textAlign: 'center' },
   
   // Stack UI
@@ -920,6 +979,13 @@ const styles = StyleSheet.create({
   cardBackDeveloper: { fontSize: 15, color: '#888', fontWeight: '500', marginBottom: 10 },
   similarBox: { backgroundColor: '#211529', borderWidth: 1, borderColor: '#5c227e', borderRadius: 12, padding: 12, marginBottom: 15, flexDirection: 'row', alignItems: 'center' },
   similarText: { color: '#e0c0f8', fontSize: 13, flex: 1, lineHeight: 18 },
+  galleryContainer: { marginTop: 5, width: '100%', height: 160, borderRadius: 10, overflow: 'hidden', backgroundColor: '#252525', position: 'relative' },
+  galleryImage: { width: '100%', height: '100%' },
+  galleryNavLeft: { position: 'absolute', left: 5, top: 0, bottom: 0, justifyContent: 'center', padding: 5 },
+  galleryNavRight: { position: 'absolute', right: 5, top: 0, bottom: 0, justifyContent: 'center', padding: 5 },
+  galleryDotsContainer: { position: 'absolute', bottom: 10, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 6, alignItems: 'center' },
+  galleryDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.4)' },
+  galleryDotActive: { backgroundColor: '#fff', width: 8, height: 8, borderRadius: 4 },
   cardBackScroll: { flex: 1, marginVertical: 5 },
   cardBackSectionTitle: { color: '#666', fontSize: 11, fontWeight: 'bold', letterSpacing: 1, marginBottom: 8, marginTop: 10 },
   cardBackDescription: { color: '#ccc', fontSize: 14, lineHeight: 21 },
