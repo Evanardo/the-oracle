@@ -4,8 +4,22 @@ import { SCREEN_WIDTH, SCREEN_HEIGHT } from '../utils/constants';
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#121212' },
   centerStage: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-  screenHeader: { padding: 15, paddingTop: 40, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#2a2a2a' },
-  screenTitle: { fontSize: 20, fontWeight: 'bold', color: '#fff', letterSpacing: 1, marginBottom: 12 },
+  screenHeader: { padding: 15, paddingTop: 12, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#2a2a2a' },
+  screenTitle: { fontSize: 20, fontWeight: 'bold', color: '#fff', letterSpacing: 1, marginBottom: 4 },
+  collectionStatBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1c1c1e',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#2c2c2e',
+    marginTop: 6,
+  },
+  collectionStatTitle: { color: '#888', fontSize: 12, fontWeight: '600', marginRight: 4 },
+  collectionStatCount: { color: '#bf5af2', fontSize: 13, fontWeight: 'bold', marginRight: 6 },
+  collectionStatBreakdown: { color: '#aaa', fontSize: 11 },
   deckFilterRow: { flexDirection: 'row', backgroundColor: '#1c1c1e', padding: 4, borderRadius: 20, borderWidth: 1, borderColor: '#333' },
   deckFilterChip: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 16 },
   deckFilterChipActive: { backgroundColor: '#bf5af2' },
@@ -77,7 +91,7 @@ export const styles = StyleSheet.create({
   overlayTextDown: { borderWidth: 4, borderColor: '#0a84ff', color: '#0a84ff', fontSize: 28, fontWeight: 'bold', padding: 8, borderRadius: 10, letterSpacing: 2, backgroundColor: 'rgba(0,0,0,0.5)' },
 
   // Oracle UI
-  oracleFormContainer: { flex: 1, padding: 20, paddingTop: 40 },
+  oracleFormContainer: { flex: 1, padding: 20, paddingTop: 15 },
   oracleLabel: { color: '#888', fontSize: 14, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 15, marginTop: 20 },
   sourceToggleRow: { flexDirection: 'row', backgroundColor: '#1e1e1e', borderRadius: 12, padding: 4, borderWidth: 1, borderColor: '#333' },
   sourceToggle: { flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: 8 },

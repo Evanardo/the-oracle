@@ -5,13 +5,6 @@ import { styles } from '../styles/theme';
 import { ScreenshotGallery } from '../components/ScreenshotGallery';
 import { searchGamesFromIGDB } from '../api/igdb';
 
-const TABS = [
-  { id: 'all', label: 'All' },
-  { id: 'backlog', label: 'Backlog' },
-  { id: 'wishlist', label: 'Wishlist' },
-  { id: 'played', label: 'Played' },
-];
-
 export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary }) => {
   const [selectedGame, setSelectedGame] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
@@ -23,6 +16,20 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
   const [addSearchQuery, setAddSearchQuery] = useState('');
   const [addSearchResults, setAddSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+
+  // Collection Stats (Owned = Played + Backlog)
+  const playedCount = library.filter(g => g.status === 'played').length;
+  const backlogCount = library.filter(g => g.status === 'backlog').length;
+  const wishlistCount = library.filter(g => g.status === 'wishlist').length;
+  const allCount = library.filter(g => g.status !== 'passed').length;
+  const totalOwnedCount = playedCount + backlogCount;
+
+  const tabs = [
+    { id: 'all', label: 'All', count: allCount },
+    { id: 'backlog', label: 'Backlog', count: backlogCount },
+    { id: 'wishlist', label: 'Wishlist', count: wishlistCount },
+    { id: 'played', label: 'Played', count: playedCount },
+  ];
 
   const handleSearchIGDB = async () => {
     if (!addSearchQuery.trim()) return;
@@ -122,11 +129,21 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={[styles.screenHeader, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
-        <Text style={styles.screenTitle}>Vault & Timeline</Text>
-        <TouchableOpacity onPress={() => setIsAddModalVisible(true)}>
-          <Ionicons name="add-circle" size={32} color="#bf5af2" />
-        </TouchableOpacity>
+      <View style={styles.screenHeader}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <Text style={styles.screenTitle}>Vault & Timeline</Text>
+          <TouchableOpacity onPress={() => setIsAddModalVisible(true)}>
+            <Ionicons name="add-circle" size={32} color="#bf5af2" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Collection Total Stat Banner */}
+        <View style={styles.collectionStatBanner}>
+          <Ionicons name="library-outline" size={16} color="#bf5af2" style={{ marginRight: 6 }} />
+          <Text style={styles.collectionStatTitle}>Collection Total:</Text>
+          <Text style={styles.collectionStatCount}>{totalOwnedCount} {totalOwnedCount === 1 ? 'Game' : 'Games'} Owned</Text>
+          <Text style={styles.collectionStatBreakdown}>({playedCount} Played • {backlogCount} Backlog)</Text>
+        </View>
       </View>
 
       {/* Search Bar */}
@@ -144,14 +161,14 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
 
       {/* Segmented Control */}
       <View style={styles.libraryTabsRow}>
-        {TABS.map(tab => (
+        {tabs.map(tab => (
           <TouchableOpacity
             key={tab.id}
             style={[styles.libraryTab, activeTab === tab.id && styles.libraryTabActive]}
             onPress={() => setActiveTab(tab.id)}
           >
             <Text style={[styles.libraryTabText, activeTab === tab.id && styles.libraryTabTextActive]}>
-              {tab.label}
+              {tab.label} ({tab.count})
             </Text>
           </TouchableOpacity>
         ))}
@@ -199,12 +216,16 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
 
                 <Text style={styles.specsHeader}>PLAYER RESPECT SPECS</Text>
                 <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Category</Text>
+                  <Text style={styles.detailValue}>{selectedGame.vibe}</Text>
+                </View>
+                <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Est. Session</Text>
                   <Text style={styles.detailValue}>{selectedGame.time}</Text>
                 </View>
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Pause Anytime</Text>
-                  <Text style={[styles.detailValue, selectedGame.isPauseable && { color: '#32d74b' }]}>
+                  <Text style={[styles.detailValue, { color: selectedGame.isPauseable ? '#32d74b' : '#ff453a' }]}>
                     {selectedGame.isPauseable ? 'Yes' : 'No'}
                   </Text>
                 </View>

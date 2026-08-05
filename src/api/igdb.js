@@ -22,9 +22,9 @@ const determineVibe = (igdbGame) => {
   
   const has = (arr, keywords) => keywords.some(k => arr.some(item => item.includes(k)));
 
-  // Scary
+  // Dark
   if (has(genres, ['horror']) || has(themes, ['horror'])) {
-    return 'Scary';
+    return 'Dark';
   }
   // Relaxing
   if (has(genres, ['simulator', 'puzzle', 'music', 'casual']) || has(themes, ['educational', 'kids'])) {
@@ -53,6 +53,25 @@ const determineVibe = (igdbGame) => {
 
   // Fallback
   return 'Narrative'; 
+};
+
+const determineIsPauseable = (igdbGame) => {
+  const name = (igdbGame.name || '').toLowerCase();
+  
+  // Souls-like games notoriously don't have a pause menu
+  const unpauseableFranchises = ['dark souls', 'bloodborne', 'elden ring', 'sekiro', "demon's souls", 'nioh', 'lies of p'];
+  if (unpauseableFranchises.some(f => name.includes(f))) {
+    return false;
+  }
+  
+  // Check if it's strictly multiplayer/MMO
+  const modes = igdbGame.game_modes?.map(m => m.name.toLowerCase()) || [];
+  if (modes.includes('massively multiplayer online (mmo)') || 
+     (modes.includes('multiplayer') && !modes.includes('single player'))) {
+    return false;
+  }
+  
+  return true;
 };
 
 const mapIGDBToAppFormat = (igdbGame) => {
@@ -108,7 +127,7 @@ const mapIGDBToAppFormat = (igdbGame) => {
     tags,
     vibe: determineVibe(igdbGame),
     time: 'Flexible', 
-    isPauseable: true,
+    isPauseable: determineIsPauseable(igdbGame),
     description: igdbGame.summary || 'No description available.',
     coverUrl,
     screenshots

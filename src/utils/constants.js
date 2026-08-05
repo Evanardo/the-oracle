@@ -7,7 +7,7 @@ export const SWIPE_OUT_DURATION = 250;
 export const VIBES = [
   'Relaxing',
   'Intense',
-  'Scary',
+  'Dark',
   'Sweaty',
   'Brain-Off',
   'Strategic',
