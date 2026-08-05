@@ -20,7 +20,7 @@ export const styles = StyleSheet.create({
   emptyStateSubtext: { color: '#888', fontSize: 14, marginTop: 10, textAlign: 'center' },
   
   // Card UI & 3D Flip
-  card: { position: 'absolute', width: SCREEN_WIDTH * 0.9, height: SCREEN_HEIGHT * 0.65, backgroundColor: '#1e1e1e', borderRadius: 20, borderWidth: 1, borderColor: '#333', shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 10, elevation: 5, overflow: 'hidden' },
+  card: { position: 'absolute', width: SCREEN_WIDTH * 0.9, height: SCREEN_HEIGHT * 0.65, backgroundColor: '#1e1e1e', borderRadius: 20, borderWidth: 1, borderColor: '#333', boxShadow: '0px 10px 10px rgba(0, 0, 0, 0.5)', elevation: 5, overflow: 'hidden' },
   cardFace: { position: 'absolute', width: '100%', height: '100%', backfaceVisibility: 'hidden' },
   cardBackFace: { backgroundColor: '#181818', borderRadius: 20 },
   cardContentLayout: { flex: 1, justifyContent: 'flex-end' },
@@ -35,8 +35,8 @@ export const styles = StyleSheet.create({
   infoFlipButtonText: { color: '#fff', fontSize: 12, fontWeight: '600' },
   
   cardFooter: { padding: 20, backgroundColor: 'transparent' },
-  cardTitle: { fontSize: 32, fontWeight: 'bold', color: '#fff', marginBottom: 5, textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3 },
-  cardDeveloper: { fontSize: 16, color: '#ddd', marginBottom: 12, textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3 },
+  cardTitle: { fontSize: 32, fontWeight: 'bold', color: '#fff', marginBottom: 5, textShadow: '1px 1px 3px rgba(0,0,0,0.8)' },
+  cardDeveloper: { fontSize: 16, color: '#ddd', marginBottom: 12, textShadow: '1px 1px 3px rgba(0,0,0,0.8)' },
   footerPillRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', alignItems: 'center' },
   tagPill: { backgroundColor: 'rgba(0,0,0,0.7)', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 15, alignSelf: 'flex-start', borderWidth: 1, borderColor: '#444' },
   tagText: { color: '#ddd', fontSize: 13, fontWeight: '600' },
@@ -89,10 +89,14 @@ export const styles = StyleSheet.create({
   vibeChipActive: { backgroundColor: '#bf5af2', borderColor: '#bf5af2' },
   vibeChipText: { color: '#aaa', fontWeight: '600' },
   vibeChipTextActive: { color: '#fff' },
-  oracleButton: { backgroundColor: '#bf5af2', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 18, borderRadius: 16, shadowColor: '#bf5af2', shadowOpacity: 0.4, shadowOffset: { width: 0, height: 5 }, shadowRadius: 10 },
+  oracleButton: { backgroundColor: '#bf5af2', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 18, borderRadius: 16, boxShadow: '0px 5px 10px rgba(191, 90, 242, 0.4)' },
   oracleButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold', letterSpacing: 1 },
   oracleResultContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
   errorText: { color: '#ff453a', marginTop: 20, textAlign: 'center', fontSize: 15 },
+
+  // Library Search Bar
+  searchBarContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1e1e1e', marginHorizontal: 20, marginBottom: 15, paddingHorizontal: 15, paddingVertical: 10, borderRadius: 12 },
+  searchBarInput: { flex: 1, color: '#fff', fontSize: 15, marginLeft: 10, outlineStyle: 'none' },
 
   // Library Tabs (Segmented Control)
   libraryTabsRow: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 15, gap: 10 },
@@ -126,5 +130,44 @@ export const styles = StyleSheet.create({
   detailLabel: { color: '#aaa', fontSize: 15 },
   detailValue: { color: '#fff', fontSize: 15, fontWeight: '600' },
   trojanBox: { marginTop: 25, padding: 15, backgroundColor: '#161616', borderRadius: 10, borderStyle: 'dashed', borderWidth: 1, borderColor: '#333', flexDirection: 'row', alignItems: 'center', gap: 10 },
-  trojanText: { color: '#666', fontSize: 13, flex: 1 }
+  trojanText: { color: '#666', fontSize: 13, flex: 1 },
+
+  // Library Edit Controls
+  editStatusContainer: { marginTop: 30 },
+  editStatusRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
+  editStatusButton: { flex: 1, paddingVertical: 12, borderRadius: 8, borderWidth: 1, borderColor: '#333', alignItems: 'center', backgroundColor: '#1e1e1e' },
+  editStatusButtonActive: { backgroundColor: '#333' },
+  editStatusButtonText: { color: '#888', fontWeight: 'bold', fontSize: 12, marginTop: 4 },
+  editStatusButtonTextActive: { color: '#fff' },
+  removeButton: { marginTop: 20, marginBottom: 30, backgroundColor: 'rgba(255, 69, 58, 0.1)', paddingVertical: 15, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255, 69, 58, 0.3)', alignItems: 'center', flexDirection: 'row', justifyContent: 'center' },
+  removeButtonText: { color: '#ff453a', fontWeight: 'bold', fontSize: 16, marginLeft: 8 },
+
+  // Custom Confirm Modal
+  confirmOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  confirmDialog: { backgroundColor: '#1e1e1e', borderRadius: 20, padding: 25, width: '100%', maxWidth: 340, borderWidth: 1, borderColor: '#333', alignItems: 'center' },
+  confirmTitle: { color: '#fff', fontSize: 20, fontWeight: 'bold', marginBottom: 15, textAlign: 'center' },
+  confirmText: { color: '#aaa', fontSize: 15, textAlign: 'center', marginBottom: 30, lineHeight: 22 },
+  confirmButtonRow: { flexDirection: 'row', gap: 15, width: '100%' },
+  confirmCancelBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: '#333', alignItems: 'center' },
+  confirmCancelText: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
+  confirmDeleteBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: '#ff453a', alignItems: 'center' },
+  confirmDeleteText: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
+
+  // Add Game (Search) Modal
+  addModalContainer: { backgroundColor: '#1e1e1e', flex: 1, marginTop: 50, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, borderWidth: 1, borderColor: '#333' },
+  addModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  addModalTitle: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
+  addSearchRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
+  addSearchInput: { flex: 1, backgroundColor: '#2a2a2a', borderRadius: 12, paddingHorizontal: 15, paddingVertical: 12, color: '#fff', fontSize: 16, borderWidth: 1, borderColor: '#444' },
+  addSearchBtn: { backgroundColor: '#bf5af2', paddingHorizontal: 20, justifyContent: 'center', alignItems: 'center', borderRadius: 12 },
+  addResultItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#161616', padding: 12, borderRadius: 12, marginBottom: 10, borderWidth: 1, borderColor: '#333' },
+  addResultImage: { width: 50, height: 70, borderRadius: 8, backgroundColor: '#252525' },
+  addResultInfo: { flex: 1, marginLeft: 15 },
+  addResultTitle: { color: '#fff', fontSize: 16, fontWeight: 'bold', marginBottom: 4 },
+  addResultDev: { color: '#888', fontSize: 13 },
+  addResultBtn: { backgroundColor: '#333', paddingVertical: 8, paddingHorizontal: 15, borderRadius: 8 },
+  addResultBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 13 },
+  addResultBtnAdded: { backgroundColor: '#bf5af2' },
+  addResultBtnTextAdded: { color: '#fff' },
+  addEmptyText: { color: '#888', textAlign: 'center', marginTop: 40, fontSize: 16 }
 });

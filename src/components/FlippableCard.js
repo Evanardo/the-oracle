@@ -178,10 +178,10 @@ const CardBackContent = ({ item, onFlip }) => (
         </View>
       ) : null}
 
-      {item.screenshots && item.screenshots.length > 0 && (
+      {(item.screenshots?.length > 0 || item.coverUrl) && (
         <View style={{ marginBottom: 15 }}>
           <Text style={styles.cardBackSectionTitle}>SCREENSHOTS</Text>
-          <ScreenshotGallery screenshots={item.screenshots} />
+          <ScreenshotGallery screenshots={item.screenshots?.length > 0 ? item.screenshots : [item.coverUrl]} />
         </View>
       )}
 

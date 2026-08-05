@@ -16,6 +16,45 @@ const fetchWithTimeout = async (url, options = {}, timeoutMs = 3000) => {
   }
 };
 
+const determineVibe = (igdbGame) => {
+  const genres = igdbGame.genres?.map(g => g.name.toLowerCase()) || [];
+  const themes = igdbGame.themes?.map(t => t.name.toLowerCase()) || [];
+  
+  const has = (arr, keywords) => keywords.some(k => arr.some(item => item.includes(k)));
+
+  // Scary
+  if (has(genres, ['horror']) || has(themes, ['horror'])) {
+    return 'Scary';
+  }
+  // Relaxing
+  if (has(genres, ['simulator', 'puzzle', 'music', 'casual']) || has(themes, ['educational', 'kids'])) {
+    return 'Relaxing';
+  }
+  // Sweaty
+  if (has(genres, ['moba', 'fighting', 'sport']) || has(themes, ['competitive', 'esports'])) {
+    return 'Sweaty';
+  }
+  // Strategic
+  if (has(genres, ['strategy', 'tactical', 'turn-based', 'card', 'board', 'rts'])) {
+    return 'Strategic';
+  }
+  // Narrative
+  if (has(genres, ['role-playing', 'rpg', 'point-and-click', 'visual novel']) || has(themes, ['mystery', 'drama'])) {
+    return 'Narrative';
+  }
+  // Brain-Off
+  if (has(genres, ['platform', 'arcade', 'pinball', 'racing'])) {
+    return 'Brain-Off';
+  }
+  // Intense (Action default)
+  if (has(genres, ['shooter', 'hack and slash', 'action'])) {
+    return 'Intense';
+  }
+
+  // Fallback
+  return 'Narrative'; 
+};
+
 const mapIGDBToAppFormat = (igdbGame) => {
   const developerObj = igdbGame.involved_companies?.find(c => c.developer);
   const developer = developerObj?.company?.name || 'Unknown Developer';
@@ -67,7 +106,7 @@ const mapIGDBToAppFormat = (igdbGame) => {
     gameModes,
     perspective,
     tags,
-    vibe: VIBES[Math.floor(Math.random() * VIBES.length)],
+    vibe: determineVibe(igdbGame),
     time: 'Flexible', 
     isPauseable: true,
     description: igdbGame.summary || 'No description available.',
@@ -126,6 +165,50 @@ export const fetchGamesFromIGDB = async (filterMode, library) => {
     const formattedGames = successData
       .map(mapIGDBToAppFormat)
       .filter(game => !libraryIdSet.has(game.id));
+    return { data: formattedGames, error: false };
+  } else {
+    return { data: [], error: true };
+  }
+};
+
+export const searchGamesFromIGDB = async (query) => {
+  const currentHost = (typeof window !== 'undefined' && window.location?.hostname) 
+    ? window.location.hostname 
+    : 'localhost';
+
+  const endpoints = [
+    `http://${currentHost}:3001`,
+    'http://localhost:3001'
+  ];
+
+  const safeQuery = query.replace(/"/g, '');
+  const bodyQuery = `search "${safeQuery}"; fields name, summary, rating, rating_count, first_release_date, cover.image_id, screenshots.image_id, genres.name, platforms.name, game_modes.name, themes.name, player_perspectives.name, involved_companies.company.name, involved_companies.developer, similar_games.name; where cover != null; limit 20;`;
+
+  let successData = null;
+
+  for (const url of endpoints) {
+    try {
+      const response = await fetchWithTimeout(url, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'text/plain'
+        },
+        body: bodyQuery
+      }, 5000);
+
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          successData = data;
+          break;
+        }
+      }
+    } catch (err) {}
+  }
+
+  if (successData) {
+    const formattedGames = successData.map(mapIGDBToAppFormat);
     return { data: formattedGames, error: false };
   } else {
     return { data: [], error: true };

@@ -40,7 +40,7 @@ export const OracleScreen = ({ library }) => {
         <View style={styles.oracleResultContainer}>
           <FlippableCard 
             item={recommendation} 
-            customStyle={{ position: 'relative', shadowOpacity: 0.8, shadowColor: '#bf5af2' }}
+            customStyle={{ position: 'relative', boxShadow: '0px 4px 10px rgba(191, 90, 242, 0.8)' }}
           />
           <TouchableOpacity 
             style={[styles.oracleButton, { marginTop: 40, backgroundColor: '#333' }]} 
