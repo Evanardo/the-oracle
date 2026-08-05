@@ -43,7 +43,7 @@ export const OracleScreen = ({ library }) => {
             customStyle={{ position: 'relative', boxShadow: '0px 4px 10px rgba(191, 90, 242, 0.8)' }}
           />
           <TouchableOpacity 
-            style={[styles.oracleButton, { marginTop: 40, backgroundColor: '#333' }]} 
+            style={[styles.oracleButton, { marginTop: 40, backgroundColor: '#333', width: '100%', paddingVertical: 14, borderRadius: 12, boxShadow: 'none' }]} 
             onPress={() => setRecommendation(null)}
           >
             <Ionicons name="refresh-outline" size={20} color="#fff" style={{ marginRight: 10 }} />

@@ -18,6 +18,20 @@ LogBox.ignoreLogs([
   '"textShadow*" style props are deprecated'
 ]);
 
+// Override console.warn to also suppress them in the terminal output
+const originalWarn = console.warn;
+console.warn = (...args) => {
+  const message = typeof args[0] === 'string' ? args[0] : '';
+  if (
+    message.includes('props.pointerEvents is deprecated') ||
+    message.includes('"shadow*" style props are deprecated') ||
+    message.includes('"textShadow*" style props are deprecated')
+  ) {
+    return;
+  }
+  originalWarn(...args);
+};
+
 export default function App() {
   const [library, setLibrary] = useState(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
