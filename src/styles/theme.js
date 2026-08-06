@@ -74,6 +74,12 @@ export const styles = StyleSheet.create({
   galleryDotsContainer: { position: 'absolute', bottom: 10, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 6, alignItems: 'center' },
   galleryDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.4)' },
   galleryDotActive: { backgroundColor: '#fff', width: 8, height: 8, borderRadius: 4 },
+  
+  // Fullscreen Image Modal
+  fullscreenModalBackground: { flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center' },
+  fullscreenModalClose: { position: 'absolute', top: 50, right: 20, zIndex: 100, padding: 10 },
+  fullscreenImageContainer: { width: '100%', height: '80%', position: 'relative' },
+  fullscreenImage: { width: '100%', height: '100%' },
   cardBackScroll: { flex: 1, marginVertical: 5 },
   cardBackSectionTitle: { color: '#666', fontSize: 11, fontWeight: 'bold', letterSpacing: 1, marginBottom: 8, marginTop: 10 },
   cardBackDescription: { color: '#ccc', fontSize: 14, lineHeight: 21 },

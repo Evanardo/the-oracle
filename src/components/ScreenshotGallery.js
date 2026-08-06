@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Image, TouchableOpacity } from 'react-native';
+import { View, Image, TouchableOpacity, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { styles } from '../styles/theme';
 
 export const ScreenshotGallery = React.memo(({ screenshots }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [modalVisible, setModalVisible] = useState(false);
   
   if (!screenshots || screenshots.length === 0) return null;
 
@@ -17,26 +18,60 @@ export const ScreenshotGallery = React.memo(({ screenshots }) => {
   };
 
   return (
-    <View style={styles.galleryContainer}>
-      <Image source={{ uri: screenshots[currentIndex] }} style={styles.galleryImage} resizeMode="cover" />
-      
-      {screenshots.length > 1 && (
-        <>
-          <TouchableOpacity style={styles.galleryNavLeft} onPress={handlePrev}>
-            <Ionicons name="chevron-back-circle" size={32} color="rgba(255,255,255,0.7)" />
+    <>
+      <View style={styles.galleryContainer}>
+        <TouchableOpacity activeOpacity={0.9} onPress={() => setModalVisible(true)} style={{ flex: 1 }}>
+          <Image source={{ uri: screenshots[currentIndex] }} style={styles.galleryImage} resizeMode="cover" />
+        </TouchableOpacity>
+        
+        {screenshots.length > 1 && (
+          <>
+            <TouchableOpacity style={styles.galleryNavLeft} onPress={handlePrev}>
+              <Ionicons name="chevron-back-circle" size={32} color="rgba(255,255,255,0.7)" />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.galleryNavRight} onPress={handleNext}>
+              <Ionicons name="chevron-forward-circle" size={32} color="rgba(255,255,255,0.7)" />
+            </TouchableOpacity>
+
+            <View style={styles.galleryDotsContainer}>
+              {screenshots.map((_, i) => (
+                <View key={i} style={[styles.galleryDot, i === currentIndex && styles.galleryDotActive]} />
+              ))}
+            </View>
+          </>
+        )}
+      </View>
+
+      <Modal visible={modalVisible} transparent={true} animationType="fade" onRequestClose={() => setModalVisible(false)}>
+        <View style={styles.fullscreenModalBackground}>
+          <TouchableOpacity style={styles.fullscreenModalClose} onPress={() => setModalVisible(false)}>
+            <Ionicons name="close" size={32} color="#fff" />
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.galleryNavRight} onPress={handleNext}>
-            <Ionicons name="chevron-forward-circle" size={32} color="rgba(255,255,255,0.7)" />
-          </TouchableOpacity>
+          <View style={styles.fullscreenImageContainer}>
+            <Image source={{ uri: screenshots[currentIndex] }} style={styles.fullscreenImage} resizeMode="contain" />
+            
+            {screenshots.length > 1 && (
+              <>
+                <TouchableOpacity style={styles.galleryNavLeft} onPress={handlePrev}>
+                  <Ionicons name="chevron-back-circle" size={48} color="rgba(255,255,255,0.8)" />
+                </TouchableOpacity>
+                
+                <TouchableOpacity style={styles.galleryNavRight} onPress={handleNext}>
+                  <Ionicons name="chevron-forward-circle" size={48} color="rgba(255,255,255,0.8)" />
+                </TouchableOpacity>
 
-          <View style={styles.galleryDotsContainer}>
-            {screenshots.map((_, i) => (
-              <View key={i} style={[styles.galleryDot, i === currentIndex && styles.galleryDotActive]} />
-            ))}
+                <View style={styles.galleryDotsContainer}>
+                  {screenshots.map((_, i) => (
+                    <View key={i} style={[styles.galleryDot, i === currentIndex && styles.galleryDotActive]} />
+                  ))}
+                </View>
+              </>
+            )}
           </View>
-        </>
-      )}
-    </View>
+        </View>
+      </Modal>
+    </>
   );
 });

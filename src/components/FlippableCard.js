@@ -145,8 +145,13 @@ const CardContent = ({ item, onFlip }) => (
 
 const CardBackContent = ({ item, onFlip }) => (
   <View style={styles.cardBackLayout}>
+    <TouchableOpacity onPress={onFlip} style={[styles.infoFlipButton, { backgroundColor: '#251b33', borderColor: '#bf5af2' }]}>
+      <Ionicons name="close-circle-outline" size={20} color="#bf5af2" style={{ marginRight: 4 }} />
+      <Text style={[styles.infoFlipButtonText, { color: '#bf5af2' }]}>Close</Text>
+    </TouchableOpacity>
+
     <View style={styles.cardBackHeader}>
-      <View style={styles.cardBackTitleRow}>
+      <View style={[styles.cardBackTitleRow, { paddingRight: 80 }]}>
         <Text style={styles.cardBackTitle} numberOfLines={2}>{item.title}</Text>
         {item.ratingScore ? (
           <View style={styles.cardBackScoreBadge}>
@@ -208,10 +213,5 @@ const CardBackContent = ({ item, onFlip }) => (
         <Text style={[styles.detailValue, { color: '#bf5af2' }]}>{item.vibe}</Text>
       </View>
     </ScrollView>
-
-    <TouchableOpacity onPress={onFlip} style={styles.flipBackFooter}>
-      <Ionicons name="swap-horizontal-outline" size={18} color="#bf5af2" style={{ marginRight: 6 }} />
-      <Text style={styles.flipBackFooterText}>Tap to Flip Cover</Text>
-    </TouchableOpacity>
   </View>
 );
