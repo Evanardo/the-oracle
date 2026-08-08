@@ -10,6 +10,8 @@ export const OracleScreen = ({ library }) => {
   const [source, setSource] = useState('backlog');
   const [recommendation, setRecommendation] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [rouletteGame, setRouletteGame] = useState(null);
 
   const handleConsultOracle = () => {
     setErrorMsg('');
@@ -24,31 +26,60 @@ export const OracleScreen = ({ library }) => {
       return;
     }
 
-    const pick = candidates[Math.floor(Math.random() * candidates.length)];
-    
-    setTimeout(() => {
-      setRecommendation(pick);
-    }, 400);
+    setIsSpinning(true);
+    let speed = 50;
+    let iterations = 0;
+    const maxIterations = 20;
+    const finalPick = candidates[Math.floor(Math.random() * candidates.length)];
+
+    const spin = () => {
+      const randomDisplay = candidates[Math.floor(Math.random() * candidates.length)];
+      setRouletteGame(randomDisplay);
+
+      iterations++;
+      
+      if (iterations < maxIterations) {
+        speed = speed * 1.15; // Gradually slow down
+        setTimeout(spin, speed);
+      } else {
+        // Lock in the final pick
+        setRouletteGame(finalPick);
+        setTimeout(() => {
+          setIsSpinning(false);
+          setRecommendation(finalPick);
+        }, 600); // Pause on the final pick briefly
+      }
+    };
+
+    spin();
   };
 
-  if (recommendation) {
+  if (isSpinning || recommendation) {
+    const displayGame = isSpinning ? rouletteGame : recommendation;
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.screenHeader}>
-          <Text style={styles.screenTitle}>The Oracle Speaks</Text>
+          <Text style={styles.screenTitle}>{isSpinning ? "The Oracle is Thinking..." : "The Oracle Speaks"}</Text>
         </View>
         <View style={styles.oracleResultContainer}>
-          <FlippableCard 
-            item={recommendation} 
-            customStyle={{ position: 'relative', boxShadow: '0px 4px 10px rgba(191, 90, 242, 0.8)' }}
-          />
-          <TouchableOpacity 
-            style={[styles.oracleButton, { marginTop: 40, backgroundColor: '#333', width: '100%', paddingVertical: 14, borderRadius: 12, boxShadow: 'none' }]} 
-            onPress={() => setRecommendation(null)}
-          >
-            <Ionicons name="refresh-outline" size={20} color="#fff" style={{ marginRight: 10 }} />
-            <Text style={styles.oracleButtonText}>Ask Again</Text>
-          </TouchableOpacity>
+          {displayGame && (
+            <FlippableCard 
+              item={displayGame} 
+              customStyle={{ position: 'relative', boxShadow: isSpinning ? 'none' : '0px 4px 15px rgba(255, 255, 255, 0.4)' }}
+            />
+          )}
+          
+          {!isSpinning && (
+            <View style={{ position: 'absolute', bottom: 10, left: 20, right: 20 }}>
+              <TouchableOpacity 
+                style={styles.oracleButton} 
+                onPress={() => setRecommendation(null)}
+              >
+                <Ionicons name="refresh-outline" size={20} color="#fff" style={{ marginRight: 10 }} />
+                <Text style={styles.oracleButtonText}>Ask Again</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </SafeAreaView>
     );
@@ -92,7 +123,7 @@ export const OracleScreen = ({ library }) => {
 
         {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
 
-        <View style={{ flex: 1, justifyContent: 'flex-end', paddingBottom: 40 }}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', paddingBottom: 10 }}>
           <TouchableOpacity style={styles.oracleButton} onPress={handleConsultOracle}>
             <Ionicons name="sparkles" size={20} color="#fff" style={{ marginRight: 10 }} />
             <Text style={styles.oracleButtonText}>Reveal Game</Text>

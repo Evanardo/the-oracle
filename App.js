@@ -132,9 +132,9 @@ export default function App() {
             tabBarActiveTintColor: '#fff',
             tabBarInactiveTintColor: '#555',
             tabBarStyle: {
-              backgroundColor: '#121212',
-              borderTopWidth: 1,
-              borderTopColor: '#2a2a2a',
+              backgroundColor: '#000000',
+              borderTopWidth: 0.5,
+              borderTopColor: '#222',
               height: Platform.OS === 'ios' ? 85 : 72,
               paddingTop: 6,
               paddingBottom: Platform.OS === 'ios' ? 24 : 8,
@@ -152,7 +152,7 @@ export default function App() {
           })}
         >
           <Tab.Screen name="Stack">
-            {(props) => <StackScreen {...props} library={library} onSaveToLibrary={handleSaveToLibrary} />}
+            {(props) => <StackScreen {...props} library={library} onSaveToLibrary={handleSaveToLibrary} onRemoveFromLibrary={handleRemoveFromLibrary} />}
           </Tab.Screen>
           <Tab.Screen name="Oracle">
             {(props) => <OracleScreen {...props} library={library} />}

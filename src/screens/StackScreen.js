@@ -6,12 +6,13 @@ import { FlippableCard } from '../components/FlippableCard';
 import { styles } from '../styles/theme';
 import { SCREEN_WIDTH, SCREEN_HEIGHT, SWIPE_THRESHOLD, SWIPE_OUT_DURATION } from '../utils/constants';
 
-export const StackScreen = ({ library, onSaveToLibrary }) => {
+export const StackScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary }) => {
   const [gamesStack, setGamesStack] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [deckFilter, setDeckFilter] = useState('popular');
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [swipeHistory, setSwipeHistory] = useState([]);
   const position = useRef(new Animated.ValueXY()).current;
 
   const gamesStackRef = useRef(gamesStack);
@@ -31,6 +32,7 @@ export const StackScreen = ({ library, onSaveToLibrary }) => {
 
   const loadGames = async () => {
     setLoading(true);
+    setSwipeHistory([]);
     const { data, error } = await fetchGamesFromIGDB(deckFilter, library);
     if (error) {
       setError(true);
@@ -99,6 +101,8 @@ export const StackScreen = ({ library, onSaveToLibrary }) => {
       });
     }
 
+    setSwipeHistory(prev => [...prev, { index: idx, direction, game: currentGame }]);
+
     position.setValue({ x: 0, y: 0 });
     setCurrentIndex(prev => prev + 1);
   };
@@ -109,6 +113,37 @@ export const StackScreen = ({ library, onSaveToLibrary }) => {
       friction: 5,
       useNativeDriver: true, // Optimized for native thread
     }).start();
+  };
+
+  const handleRewind = () => {
+    if (swipeHistory.length === 0) return;
+    
+    const lastSwipe = swipeHistory[swipeHistory.length - 1];
+    
+    if (lastSwipe.direction !== 'left') {
+      onRemoveFromLibrary(lastSwipe.game.id);
+    }
+    
+    // Position it off-screen in the direction it was swiped
+    let startValue = { x: 0, y: 0 };
+    if (lastSwipe.direction === 'right') startValue = { x: SCREEN_WIDTH * 1.5, y: 0 };
+    if (lastSwipe.direction === 'left') startValue = { x: -SCREEN_WIDTH * 1.5, y: 0 };
+    if (lastSwipe.direction === 'down') startValue = { x: 0, y: SCREEN_HEIGHT * 1.5 };
+    if (lastSwipe.direction === 'up') startValue = { x: 0, y: -SCREEN_HEIGHT * 1.5 };
+
+    position.setValue(startValue);
+    setCurrentIndex(lastSwipe.index);
+    setSwipeHistory(prev => prev.slice(0, -1));
+    
+    // Animate it back to the center after a slight delay to allow the card to remount
+    setTimeout(() => {
+      Animated.spring(position, {
+        toValue: { x: 0, y: 0 },
+        friction: 6,
+        tension: 40,
+        useNativeDriver: true,
+      }).start();
+    }, 50);
   };
 
   const opacityRight = position.x.interpolate({ inputRange: [0, SWIPE_THRESHOLD], outputRange: [0, 1], extrapolate: 'clamp' });
@@ -126,8 +161,8 @@ export const StackScreen = ({ library, onSaveToLibrary }) => {
     if (loading) {
       return (
         <View style={styles.emptyState}>
-          <ActivityIndicator size="large" color="#bf5af2" />
-          <Text style={styles.emptyStateSubtext}>Consulting IGDB Database...</Text>
+          <ActivityIndicator size="large" color="#fff" />
+          <Text style={styles.emptyStateSubtext}>Consulting IGDB...</Text>
         </View>
       );
     }
@@ -138,8 +173,8 @@ export const StackScreen = ({ library, onSaveToLibrary }) => {
           <Ionicons name="wifi-outline" size={64} color="#ff453a" />
           <Text style={styles.emptyStateText}>No Connection</Text>
           <Text style={styles.emptyStateSubtext}>The Stack requires an active internet connection to discover new games.</Text>
-          <TouchableOpacity onPress={loadGames} style={{marginTop: 20}}>
-            <Text style={{color: '#bf5af2', fontWeight: 'bold', fontSize: 16}}>Try Again</Text>
+          <TouchableOpacity onPress={loadGames} style={{marginTop: 20, padding: 10, borderWidth: 0.5, borderColor: '#fff', borderRadius: 8}}>
+            <Text style={{color: '#fff', fontWeight: '500', fontSize: 13, textTransform: 'uppercase', letterSpacing: 1}}>Try Again</Text>
           </TouchableOpacity>
         </View>
       );
@@ -150,8 +185,8 @@ export const StackScreen = ({ library, onSaveToLibrary }) => {
         <View style={styles.emptyState}>
           <Ionicons name="checkmark-done-circle-outline" size={64} color="#32d74b" />
           <Text style={styles.emptyStateText}>Stack Sorted!</Text>
-          <TouchableOpacity onPress={loadGames} style={{marginTop: 20}}>
-            <Text style={{color: '#bf5af2', fontWeight: 'bold', fontSize: 16}}>Fetch More Games</Text>
+          <TouchableOpacity onPress={loadGames} style={{marginTop: 20, padding: 10, borderWidth: 0.5, borderColor: '#fff', borderRadius: 8}}>
+            <Text style={{color: '#fff', fontWeight: '500', fontSize: 13, textTransform: 'uppercase', letterSpacing: 1}}>Fetch More Games</Text>
           </TouchableOpacity>
         </View>
       );
@@ -200,6 +235,14 @@ export const StackScreen = ({ library, onSaveToLibrary }) => {
         </View>
       </View>
       <View style={styles.cardContainer}>{renderCards()}</View>
+      {swipeHistory.length > 0 && (
+        <TouchableOpacity 
+          style={{ position: 'absolute', bottom: 30, right: 30, backgroundColor: '#111', padding: 12, borderRadius: 30, borderWidth: 0.5, borderColor: '#fff', elevation: 5, shadowColor: '#fff', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.2, shadowRadius: 10 }}
+          onPress={handleRewind}
+        >
+          <Ionicons name="play-back" size={24} color="#fff" />
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 };

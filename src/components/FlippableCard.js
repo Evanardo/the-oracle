@@ -67,7 +67,7 @@ export const FlippableCard = React.memo(({
   }
 
   return (
-    <Animated.View style={cardStyle} {...(isTopCard && panHandlers ? panHandlers : {})}>
+    <Animated.View style={cardStyle} {...(isTopCard && !isFlipped && panHandlers ? panHandlers : {})}>
       {/* Front Face */}
       <Animated.View 
         style={[
@@ -145,20 +145,14 @@ const CardContent = ({ item, onFlip }) => (
 
 const CardBackContent = ({ item, onFlip }) => (
   <View style={styles.cardBackLayout}>
-    <TouchableOpacity onPress={onFlip} style={[styles.infoFlipButton, { backgroundColor: '#251b33', borderColor: '#bf5af2' }]}>
-      <Ionicons name="close-circle-outline" size={20} color="#bf5af2" style={{ marginRight: 4 }} />
-      <Text style={[styles.infoFlipButtonText, { color: '#bf5af2' }]}>Close</Text>
+    <TouchableOpacity onPress={onFlip} style={[styles.infoFlipButton, { backgroundColor: '#111', borderColor: '#fff' }]}>
+      <Ionicons name="arrow-undo-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
+      <Text style={[styles.infoFlipButtonText, { color: '#fff' }]}>Flip</Text>
     </TouchableOpacity>
 
     <View style={styles.cardBackHeader}>
       <View style={[styles.cardBackTitleRow, { paddingRight: 80 }]}>
         <Text style={styles.cardBackTitle} numberOfLines={2}>{item.title}</Text>
-        {item.ratingScore ? (
-          <View style={styles.cardBackScoreBadge}>
-            <Ionicons name="trophy" size={14} color="#ffd60a" style={{ marginRight: 4 }} />
-            <Text style={styles.cardBackScoreText}>{item.ratingScore}%</Text>
-          </View>
-        ) : null}
       </View>
 
       <Text style={styles.cardBackDeveloper}>
@@ -169,6 +163,12 @@ const CardBackContent = ({ item, onFlip }) => (
         <View style={styles.tagPill}>
           <Text style={styles.tagText}>{item.tags}</Text>
         </View>
+        {item.ratingScore ? (
+          <View style={styles.cardBackScoreBadge}>
+            <Ionicons name="star" size={14} color="#ffd60a" style={{ marginRight: 4 }} />
+            <Text style={styles.cardBackScoreText}>{item.ratingScore}%</Text>
+          </View>
+        ) : null}
       </View>
     </View>
 

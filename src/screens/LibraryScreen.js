@@ -1,5 +1,9 @@
-import React, { useState } from 'react';
-import { View, Text, SafeAreaView, FlatList, TouchableOpacity, Modal, ScrollView, Image, TextInput, Alert, ActivityIndicator } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, SafeAreaView, FlatList, TouchableOpacity, Modal, ScrollView, Image, TextInput, Alert, ActivityIndicator, LayoutAnimation, Platform, UIManager, Animated } from 'react-native';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 import { Ionicons } from '@expo/vector-icons';
 import { styles } from '../styles/theme';
 import { ScreenshotGallery } from '../components/ScreenshotGallery';
@@ -10,6 +14,19 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [sortOption, setSortOption] = useState('recent');
+  const [showSort, setShowSort] = useState(false);
+  const sortAnim = useRef(new Animated.Value(0)).current;
+  const listOpacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.spring(sortAnim, {
+      toValue: showSort ? 1 : 0,
+      friction: 8,
+      tension: 60,
+      useNativeDriver: false,
+    }).start();
+  }, [showSort]);
 
   // Add Game Modal States
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
@@ -50,12 +67,11 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
   const getBadgeStyle = (status) => {
     if (status === 'played') return { color: '#32d74b', borderColor: '#32d74b', label: 'PLAYED' };
     if (status === 'backlog') return { color: '#0a84ff', borderColor: '#0a84ff', label: 'BACKLOG' };
-    if (status === 'wishlist') return { color: '#bf5af2', borderColor: '#bf5af2', label: 'WISHLIST' };
+    if (status === 'wishlist') return { color: '#fff', borderColor: '#fff', label: 'WISHLIST' };
     return { color: '#888', borderColor: '#888', label: status };
   };
 
-  // Filter games based on the active tab and search query
-  const visibleLibrary = library.filter(g => {
+  let visibleLibrary = library.filter(g => {
     if (g.status === 'passed') return false;
     
     // Tab filtering
@@ -71,6 +87,14 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
     
     return true;
   });
+
+  if (sortOption === 'title') {
+    visibleLibrary.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+  } else if (sortOption === 'rating') {
+    visibleLibrary.sort((a, b) => (b.ratingScore || 0) - (a.ratingScore || 0));
+  } else if (sortOption === 'year') {
+    visibleLibrary.sort((a, b) => (b.releaseYear || 0) - (a.releaseYear || 0));
+  }
 
   const renderItem = ({ item }) => {
     const badge = getBadgeStyle(item.status);
@@ -133,31 +157,75 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
           <Text style={styles.screenTitle}>Vault & Timeline</Text>
           <TouchableOpacity onPress={() => setIsAddModalVisible(true)}>
-            <Ionicons name="add-circle" size={32} color="#bf5af2" />
+            <Ionicons name="add-circle" size={32} color="#fff" />
           </TouchableOpacity>
         </View>
 
         {/* Collection Total Stat Banner */}
         <View style={styles.collectionStatBanner}>
-          <Ionicons name="library-outline" size={16} color="#bf5af2" style={{ marginRight: 6 }} />
+          <Ionicons name="library-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
           <Text style={styles.collectionStatTitle}>Collection Total:</Text>
           <Text style={styles.collectionStatCount}>{totalOwnedCount} {totalOwnedCount === 1 ? 'Game' : 'Games'} Owned</Text>
           <Text style={styles.collectionStatBreakdown}>({playedCount} Played • {backlogCount} Backlog)</Text>
         </View>
       </View>
 
-      {/* Search Bar */}
-      <View style={styles.searchBarContainer}>
-        <Ionicons name="search" size={20} color="#888" />
-        <TextInput
-          style={styles.searchBarInput}
-          placeholder="Search your library..."
-          placeholderTextColor="#888"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          clearButtonMode="while-editing"
-        />
+      {/* Search Bar & Sort Toggle */}
+      <View style={{ flexDirection: 'row', paddingHorizontal: 15, marginTop: 15, alignItems: 'center' }}>
+        <View style={[styles.searchBarContainer, { flex: 1, marginTop: 0, marginHorizontal: 0 }]}>
+          <Ionicons name="search" size={20} color="#888" />
+          <TextInput
+            style={styles.searchBarInput}
+            placeholder="Search your library..."
+            placeholderTextColor="#888"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            clearButtonMode="while-editing"
+          />
+        </View>
+        <TouchableOpacity 
+          style={{ marginLeft: 10, padding: 10, backgroundColor: '#0a0a0a', borderRadius: 8, borderWidth: 0.5, borderColor: showSort ? '#fff' : '#333' }}
+          onPress={() => setShowSort(!showSort)}
+        >
+          <Ionicons name="filter" size={20} color={showSort ? '#fff' : '#888'} />
+        </TouchableOpacity>
       </View>
+
+      {/* Sort Options Row */}
+      <Animated.View style={{ 
+        height: sortAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 60] }), 
+        opacity: sortAnim,
+        overflow: 'hidden' 
+      }}>
+        <View style={{ height: 45, marginTop: 10, marginBottom: 5 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingHorizontal: 15 }} contentContainerStyle={{ paddingRight: 30, alignItems: 'center' }}>
+            {[
+            { id: 'recent', label: 'Recently Added' },
+            { id: 'title', label: 'A-Z' },
+            { id: 'rating', label: 'Top Rated' },
+            { id: 'year', label: 'Newest Release' }
+          ].map(opt => (
+            <TouchableOpacity 
+              key={opt.id}
+              style={[styles.libraryTab, { marginRight: 10 }, sortOption === opt.id && styles.libraryTabActive]}
+              onPress={() => {
+                if (sortOption === opt.id) return;
+                Animated.timing(listOpacity, {
+                  toValue: 0,
+                  duration: 150,
+                  useNativeDriver: true
+                }).start(() => {
+                  setSortOption(opt.id);
+                  Animated.timing(listOpacity, { toValue: 1, duration: 150, useNativeDriver: true }).start();
+                });
+              }}
+            >
+              <Text style={[styles.libraryTabText, sortOption === opt.id && styles.libraryTabTextActive]}>{opt.label}</Text>
+            </TouchableOpacity>
+          ))}
+          </ScrollView>
+        </View>
+      </Animated.View>
 
       {/* Segmented Control */}
       <View style={styles.libraryTabsRow}>
@@ -165,7 +233,17 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
           <TouchableOpacity
             key={tab.id}
             style={[styles.libraryTab, activeTab === tab.id && styles.libraryTabActive]}
-            onPress={() => setActiveTab(tab.id)}
+            onPress={() => {
+              if (activeTab === tab.id) return;
+              Animated.timing(listOpacity, {
+                toValue: 0,
+                duration: 150,
+                useNativeDriver: true
+              }).start(() => {
+                setActiveTab(tab.id);
+                Animated.timing(listOpacity, { toValue: 1, duration: 150, useNativeDriver: true }).start();
+              });
+            }}
           >
             <Text style={[styles.libraryTabText, activeTab === tab.id && styles.libraryTabTextActive]}>
               {tab.label} ({tab.count})
@@ -174,20 +252,23 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
         ))}
       </View>
 
-      {visibleLibrary.length === 0 ? (
-        renderEmptyState()
-      ) : (
-        <FlatList
-          data={visibleLibrary}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
-          renderItem={renderItem}
-          initialNumToRender={10}
-          maxToRenderPerBatch={10}
-          windowSize={5}
-          removeClippedSubviews={true}
-        />
-      )}
+      <Animated.View style={{ flex: 1, opacity: listOpacity }}>
+        {visibleLibrary.length === 0 ? (
+          renderEmptyState()
+        ) : (
+          <FlatList
+            data={visibleLibrary}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
+            renderItem={renderItem}
+            showsVerticalScrollIndicator={false}
+            initialNumToRender={10}
+            maxToRenderPerBatch={10}
+            windowSize={5}
+            removeClippedSubviews={true}
+          />
+        )}
+      </Animated.View>
 
       <Modal visible={!!selectedGame} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
@@ -248,7 +329,7 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
                         onSaveToLibrary(updatedGame);
                       }}
                     >
-                      <Ionicons name="layers-outline" size={20} color={selectedGame.status === 'backlog' ? '#fff' : '#888'} />
+                      <Ionicons name="layers-outline" size={20} color={selectedGame.status === 'backlog' ? '#000' : '#888'} />
                       <Text style={[styles.editStatusButtonText, selectedGame.status === 'backlog' && styles.editStatusButtonTextActive]}>Backlogged</Text>
                     </TouchableOpacity>
 
@@ -260,7 +341,7 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
                         onSaveToLibrary(updatedGame);
                       }}
                     >
-                      <Ionicons name="gift-outline" size={20} color={selectedGame.status === 'wishlist' ? '#fff' : '#888'} />
+                      <Ionicons name="gift-outline" size={20} color={selectedGame.status === 'wishlist' ? '#000' : '#888'} />
                       <Text style={[styles.editStatusButtonText, selectedGame.status === 'wishlist' && styles.editStatusButtonTextActive]}>Wishlisted</Text>
                     </TouchableOpacity>
 
@@ -272,7 +353,7 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
                         onSaveToLibrary(updatedGame);
                       }}
                     >
-                      <Ionicons name="game-controller-outline" size={20} color={selectedGame.status === 'played' ? '#fff' : '#888'} />
+                      <Ionicons name="game-controller-outline" size={20} color={selectedGame.status === 'played' ? '#000' : '#888'} />
                       <Text style={[styles.editStatusButtonText, selectedGame.status === 'played' && styles.editStatusButtonTextActive]}>Playing/Played</Text>
                     </TouchableOpacity>
                   </View>
@@ -358,7 +439,7 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
 
             {isSearching ? (
               <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator size="large" color="#bf5af2" />
+                <ActivityIndicator size="large" color="#fff" />
               </View>
             ) : (
               <FlatList

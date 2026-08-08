@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import { VIBES } from '../utils/constants';
 
 const fetchWithTimeout = async (url, options = {}, timeoutMs = 3000) => {
@@ -135,9 +136,12 @@ const mapIGDBToAppFormat = (igdbGame) => {
 };
 
 export const fetchGamesFromIGDB = async (filterMode, library) => {
-  const currentHost = (typeof window !== 'undefined' && window.location?.hostname) 
-    ? window.location.hostname 
-    : 'localhost';
+  let currentHost = 'localhost';
+  if (typeof window !== 'undefined' && window.location?.hostname) {
+    currentHost = window.location.hostname;
+  } else if (Constants.expoConfig?.hostUri) {
+    currentHost = Constants.expoConfig.hostUri.split(':')[0];
+  }
 
   const endpoints = [
     `http://${currentHost}:3001`,
@@ -191,9 +195,12 @@ export const fetchGamesFromIGDB = async (filterMode, library) => {
 };
 
 export const searchGamesFromIGDB = async (query) => {
-  const currentHost = (typeof window !== 'undefined' && window.location?.hostname) 
-    ? window.location.hostname 
-    : 'localhost';
+  let currentHost = 'localhost';
+  if (typeof window !== 'undefined' && window.location?.hostname) {
+    currentHost = window.location.hostname;
+  } else if (Constants.expoConfig?.hostUri) {
+    currentHost = Constants.expoConfig.hostUri.split(':')[0];
+  }
 
   const endpoints = [
     `http://${currentHost}:3001`,
