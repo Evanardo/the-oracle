@@ -104,14 +104,16 @@ export const UpdateJournalModal = ({ visible, game, onClose, onSave }) => {
               </View>
 
               {/* Completion Date Picker */}
-              <CompletionDatePicker 
-                completedYear={completedYear}
-                completedMonth={completedMonth}
-                onChange={(yr, mo) => {
-                  setCompletedYear(yr);
-                  setCompletedMonth(mo);
-                }}
-              />
+              <View style={{ opacity: disposition === 'Completed' ? 1 : 0.4 }} pointerEvents={disposition === 'Completed' ? 'auto' : 'none'}>
+                <CompletionDatePicker 
+                  completedYear={completedYear}
+                  completedMonth={completedMonth}
+                  onChange={(yr, mo) => {
+                    setCompletedYear(yr);
+                    setCompletedMonth(mo);
+                  }}
+                />
+              </View>
 
               {/* Session Notes */}
               <View style={styles.section}>
@@ -235,14 +237,16 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: 8,
+    paddingVertical: 12,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 15,
   },
   saveButtonText: {
     color: '#000',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
 });

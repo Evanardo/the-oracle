@@ -342,6 +342,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     borderWidth: 0.5,
     borderColor: '#333333',
+    outlineStyle: 'none',
   },
   systemRow: {
     flexDirection: 'row',
@@ -407,15 +408,16 @@ const styles = StyleSheet.create({
   },
   submitBtn: {
     backgroundColor: '#ffffff',
-    paddingVertical: 14,
-    borderRadius: 10,
+    paddingVertical: 12,
+    borderRadius: 8,
     alignItems: 'center',
-    marginTop: 28,
+    marginTop: 24,
   },
   submitBtnText: {
     color: '#000000',
-    fontSize: 15,
+    fontSize: 12,
     fontWeight: '600',
-    letterSpacing: 0.5,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
 });

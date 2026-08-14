@@ -127,6 +127,20 @@ export default function App() {
     setLibrary((prev) => prev.filter(g => g.id !== gameId));
   };
 
+  const handleResetLibrary = async () => {
+    setLibrary([]);
+    try {
+      await AsyncStorage.removeItem('oracle_library');
+      await AsyncStorage.removeItem('library_migration_v3');
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem('oracle_library');
+        window.localStorage.removeItem('library_migration_v3');
+      }
+    } catch (e) {
+      console.error('Error clearing storage:', e);
+    }
+  };
+
   return (
     <>
       <StatusBar style="light" />
@@ -176,6 +190,7 @@ export default function App() {
                 library={library} 
                 onSaveToLibrary={handleSaveToLibrary}
                 onRemoveFromLibrary={handleRemoveFromLibrary}
+                onResetLibrary={handleResetLibrary}
               />
             )}
           </Tab.Screen>

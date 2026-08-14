@@ -27,11 +27,12 @@ const CONSOLE_FILTERS = [
   'Arcade', 'PC', 'Mac', 'Linux', 'Mobile', 'Other'
 ];
 
-export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary }) => {
+export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary, onResetLibrary }) => {
   const [selectedGame, setSelectedGame] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [isConfirmingReset, setIsConfirmingReset] = useState(false);
   const [sortOption, setSortOption] = useState('recent');
   const [selectedSystemFilter, setSelectedSystemFilter] = useState('ALL');
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
@@ -81,16 +82,45 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
   ];
 
   const handleSearchIGDB = async () => {
-    if (!addSearchQuery.trim()) return;
+    const trimmed = addSearchQuery.trim();
+    if (!trimmed) {
+      setAddSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
     setIsSearching(true);
-    const { data, error } = await searchGamesFromIGDB(addSearchQuery);
-    if (!error) {
+    const { data, error } = await searchGamesFromIGDB(trimmed);
+    if (!error && data) {
       setAddSearchResults(data);
     } else {
       setAddSearchResults([]);
     }
     setIsSearching(false);
   };
+
+  // Debounced auto-search as the user types
+  useEffect(() => {
+    if (!isAddModalVisible) return;
+    const trimmed = addSearchQuery.trim();
+    if (!trimmed) {
+      setAddSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const timer = setTimeout(async () => {
+      const { data, error } = await searchGamesFromIGDB(trimmed);
+      if (!error && data) {
+        setAddSearchResults(data);
+      } else {
+        setAddSearchResults([]);
+      }
+      setIsSearching(false);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [addSearchQuery, isAddModalVisible]);
 
   const handleAddGame = (game, status) => {
     onSaveToLibrary({ ...game, status });
@@ -366,40 +396,40 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
 
                   {/* Update Journal Button */}
                   <TouchableOpacity 
-                    style={{ backgroundColor: '#111', borderWidth: 0.5, borderColor: '#fff', paddingVertical: 14, borderRadius: 12, alignItems: 'center', marginBottom: 15 }}
+                    style={{ backgroundColor: '#111', borderWidth: 0.5, borderColor: '#fff', paddingVertical: 12, borderRadius: 8, alignItems: 'center', marginBottom: 15 }}
                     onPress={() => setIsJournalModalVisible(true)}
                   >
-                    <Text style={{ color: '#fff', fontSize: 15, fontWeight: 'bold' }}>Update Journal Entry</Text>
+                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '500', letterSpacing: 1.5, textTransform: 'uppercase' }}>Update Journal Entry</Text>
                   </TouchableOpacity>
 
                   {/* Vault Document Launchers */}
                   <View style={{ flexDirection: 'row', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
                     {selectedGame.manual && (
-                      <TouchableOpacity 
-                        style={{ flex: 1, backgroundColor: '#111', borderWidth: 0.5, borderColor: '#fff', paddingVertical: 10, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}
+                       <TouchableOpacity 
+                        style={{ flex: 1, backgroundColor: '#111', borderWidth: 0.5, borderColor: '#fff', paddingVertical: 11, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}
                         onPress={() => setActiveManual(selectedGame.manual)}
                       >
-                        <Ionicons name="book-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
-                        <Text style={{ color: '#fff', fontSize: 13, fontWeight: '500' }}>Read Manual</Text>
+                        <Ionicons name="book-outline" size={15} color="#fff" style={{ marginRight: 6 }} />
+                        <Text style={{ color: '#fff', fontSize: 12, fontWeight: '500', letterSpacing: 1, textTransform: 'uppercase' }}>Read Manual</Text>
                       </TouchableOpacity>
                     )}
 
                     {selectedGame.map && (
                       <TouchableOpacity 
-                        style={{ flex: 1, backgroundColor: '#111', borderWidth: 0.5, borderColor: '#fff', paddingVertical: 10, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}
+                        style={{ flex: 1, backgroundColor: '#111', borderWidth: 0.5, borderColor: '#fff', paddingVertical: 11, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}
                         onPress={() => setActiveMap(selectedGame.map)}
                       >
-                        <Ionicons name="map-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
-                        <Text style={{ color: '#fff', fontSize: 13, fontWeight: '500' }}>View Map</Text>
+                        <Ionicons name="map-outline" size={15} color="#fff" style={{ marginRight: 6 }} />
+                        <Text style={{ color: '#fff', fontSize: 12, fontWeight: '500', letterSpacing: 1, textTransform: 'uppercase' }}>View Map</Text>
                       </TouchableOpacity>
                     )}
 
                     <TouchableOpacity 
-                      style={{ backgroundColor: '#111', borderWidth: 0.5, borderColor: '#444', paddingVertical: 10, paddingHorizontal: 14, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}
+                      style={{ backgroundColor: '#111', borderWidth: 0.5, borderColor: '#444', paddingVertical: 11, paddingHorizontal: 14, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}
                       onPress={() => setEditingProfile(selectedGame)}
                     >
-                      <Ionicons name="create-outline" size={16} color="#aaa" style={{ marginRight: 4 }} />
-                      <Text style={{ color: '#aaa', fontSize: 13, fontWeight: '500' }}>Edit Profile</Text>
+                      <Ionicons name="create-outline" size={15} color="#aaa" style={{ marginRight: 4 }} />
+                      <Text style={{ color: '#aaa', fontSize: 12, fontWeight: '500', letterSpacing: 1, textTransform: 'uppercase' }}>Edit Profile</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -612,8 +642,52 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
                 })}
               </View>
             </ScrollView>
+            
+            {/* Danger Zone: Reset Library */}
+            <View style={{ padding: 15, borderTopWidth: 0.5, borderTopColor: '#333' }}>
+              <TouchableOpacity
+                style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', backgroundColor: '#3a0000', paddingVertical: 12, borderRadius: 8, borderWidth: 1, borderColor: '#ff453a' }}
+                onPress={() => {
+                  setIsFilterModalVisible(false);
+                  setIsConfirmingReset(true);
+                }}
+              >
+                <Ionicons name="warning-outline" size={18} color="#ff453a" style={{ marginRight: 8 }} />
+                <Text style={{ color: '#ff453a', fontWeight: 'bold' }}>Reset Library Data</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </TouchableOpacity>
+      </Modal>
+
+      {/* Reset Confirmation Modal */}
+      <Modal visible={isConfirmingReset} transparent={true} animationType="fade">
+        <View style={styles.confirmOverlay}>
+          <View style={styles.confirmDialog}>
+            <Ionicons name="skull-outline" size={48} color="#ff453a" style={{ marginBottom: 15 }} />
+            <Text style={styles.confirmTitle}>Wipe Entire Library?</Text>
+            <Text style={styles.confirmText}>
+              This will permanently delete all your saved games, journals, and status tracking. It cannot be undone. Are you sure you want to start fresh?
+            </Text>
+            <View style={styles.confirmButtonRow}>
+              <TouchableOpacity 
+                style={styles.confirmCancelBtn} 
+                onPress={() => setIsConfirmingReset(false)}
+              >
+                <Text style={styles.confirmCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.confirmDeleteBtn} 
+                onPress={() => {
+                  if (onResetLibrary) onResetLibrary();
+                  setIsConfirmingReset(false);
+                }}
+              >
+                <Text style={styles.confirmDeleteText}>Wipe Data</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
 
       {/* Add Game Modal */}
@@ -648,14 +722,14 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
             </View>
 
             <TouchableOpacity 
-              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#111', borderWidth: 0.5, borderColor: '#444', padding: 10, borderRadius: 8, marginVertical: 10 }}
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#111', borderWidth: 0.5, borderColor: '#444', paddingVertical: 11, paddingHorizontal: 16, borderRadius: 8, marginVertical: 10 }}
               onPress={() => {
                 setIsAddModalVisible(false);
                 setIsCustomAddVisible(true);
               }}
             >
-              <Ionicons name="add-circle-outline" size={18} color="#fff" style={{ marginRight: 6 }} />
-              <Text style={{ color: '#fff', fontSize: 13, fontWeight: '500' }}>Create Custom Profile (Manuals & Maps)</Text>
+              <Ionicons name="add-circle-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
+              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '500', letterSpacing: 1.2, textTransform: 'uppercase' }}>Create Custom Profile (Manuals & Maps)</Text>
             </TouchableOpacity>
 
             {isSearching ? (

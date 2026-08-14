@@ -118,13 +118,13 @@ const CardContent = ({ item, onFlip }) => {
 
     {item.ratingScore ? (
       <View style={styles.scoreBadge}>
-        <Ionicons name="star" size={12} color="#ffd60a" style={{ marginRight: 4 }} />
+        <Ionicons name="star-outline" size={12} color="#fff" style={{ marginRight: 4 }} />
         <Text style={styles.scoreBadgeText}>{item.ratingScore}%</Text>
       </View>
     ) : null}
 
     <TouchableOpacity onPress={onFlip} style={styles.infoFlipButton}>
-      <Ionicons name="information-circle-outline" size={20} color="#fff" style={{ marginRight: 4 }} />
+      <Ionicons name="information-circle-outline" size={15} color="#fff" style={{ marginRight: 4 }} />
       <Text style={styles.infoFlipButtonText}>Details</Text>
     </TouchableOpacity>
     
@@ -168,7 +168,7 @@ const CardBackContent = ({ item, onFlip }) => (
         </View>
         {item.ratingScore ? (
           <View style={styles.cardBackScoreBadge}>
-            <Ionicons name="star" size={14} color="#ffd60a" style={{ marginRight: 4 }} />
+            <Ionicons name="star-outline" size={14} color="#fff" style={{ marginRight: 4 }} />
             <Text style={styles.cardBackScoreText}>{item.ratingScore}%</Text>
           </View>
         ) : null}
@@ -178,9 +178,9 @@ const CardBackContent = ({ item, onFlip }) => (
     <ScrollView style={styles.cardBackScroll} showsVerticalScrollIndicator={false}>
       {item.similarGames ? (
         <View style={styles.similarBox}>
-          <Ionicons name="git-compare-outline" size={16} color="#bf5af2" style={{ marginRight: 6 }} />
+          <Ionicons name="git-compare-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
           <Text style={styles.similarText} numberOfLines={2}>
-            <Text style={{ fontWeight: 'bold', color: '#bf5af2' }}>Similar to: </Text>
+            <Text style={{ fontWeight: 'bold', color: '#fff' }}>Similar to: </Text>
             {item.similarGames}
           </Text>
         </View>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 const MONTH_SHORT = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -74,7 +75,7 @@ export const CompletionDatePicker = ({
         <TouchableOpacity
           style={[
             styles.toggleButton,
-            !isRetroactive && { backgroundColor: '#0a84ff', borderColor: '#0a84ff' }
+            !isRetroactive && { backgroundColor: '#fff', borderColor: '#fff' }
           ]}
           onPress={() => handleToggleMode(false)}
         >
@@ -89,15 +90,17 @@ export const CompletionDatePicker = ({
         <TouchableOpacity
           style={[
             styles.toggleButton,
-            isRetroactive && { backgroundColor: '#0a84ff', borderColor: '#0a84ff' }
+            { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
+            isRetroactive && { backgroundColor: '#fff', borderColor: '#fff' }
           ]}
           onPress={() => handleToggleMode(true)}
         >
+          <Ionicons name="calendar-outline" size={14} color={isRetroactive ? '#000' : '#ccc'} />
           <Text style={[
             styles.toggleText,
             isRetroactive && { color: '#000', fontWeight: '700' }
           ]}>
-            📅 Retroactive Date
+            Retroactive Date
           </Text>
         </TouchableOpacity>
       </View>
@@ -117,7 +120,7 @@ export const CompletionDatePicker = ({
                   onPress={() => handleSelectQuickYear(yr)}
                   style={[
                     styles.yearPill,
-                    isSelected && { backgroundColor: '#32d74b', borderColor: '#32d74b' }
+                    isSelected && { backgroundColor: '#fff', borderColor: '#fff' }
                   ]}
                 >
                   <Text style={[
@@ -158,7 +161,7 @@ export const CompletionDatePicker = ({
                   onPress={() => handleMonthSelect(index)}
                   style={[
                     styles.monthPill,
-                    isSelected && { backgroundColor: '#0a84ff', borderColor: '#0a84ff' }
+                    isSelected && { backgroundColor: '#fff', borderColor: '#fff' }
                   ]}
                 >
                   <Text style={[

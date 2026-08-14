@@ -28,6 +28,7 @@ export const styles = StyleSheet.create({
   emptyStateSubtext: { color: '#666', fontSize: 13, marginTop: 10, textAlign: 'center', letterSpacing: 0.5 },
   stackActionBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, paddingVertical: 12, paddingBottom: 20 },
   stackActionButton: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#0a0a0a', borderWidth: 0.5, borderColor: '#333', justifyContent: 'center', alignItems: 'center' },
+  stackActionButtonSkip: { borderColor: '#555' },
   stackActionButtonPass: { borderColor: '#444' },
   stackActionButtonBacklog: { borderColor: '#888' },
   stackActionButtonWishlist: { borderColor: '#aaa' },
@@ -46,7 +47,7 @@ export const styles = StyleSheet.create({
   // Score Badge & Buttons
   scoreBadge: { position: 'absolute', top: 15, left: 15, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 0.5, borderColor: '#fff', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, zIndex: 10 },
   scoreBadgeText: { color: '#fff', fontSize: 12, fontWeight: '500', letterSpacing: 1 },
-  infoFlipButton: { position: 'absolute', top: 15, right: 15, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.4)', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, zIndex: 10 },
+  infoFlipButton: { position: 'absolute', top: 15, right: 15, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.4)', paddingVertical: 5, paddingHorizontal: 10, borderRadius: 8, zIndex: 10 },
   infoFlipButtonText: { color: '#fff', fontSize: 11, fontWeight: '500', letterSpacing: 1, textTransform: 'uppercase' },
   
   cardFooter: { padding: 20, backgroundColor: 'transparent' },
@@ -84,8 +85,8 @@ export const styles = StyleSheet.create({
   cardBackScroll: { flex: 1, marginVertical: 5 },
   cardBackSectionTitle: { color: '#666', fontSize: 10, fontWeight: '500', letterSpacing: 1.5, marginBottom: 8, marginTop: 10, textTransform: 'uppercase' },
   cardBackDescription: { color: '#aaa', fontSize: 13, lineHeight: 22, fontWeight: '300' },
-  flipBackFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0a0a0a', borderWidth: 0.5, borderColor: '#555', paddingVertical: 12, borderRadius: 12, marginTop: 10 },
-  flipBackFooterText: { color: '#fff', fontSize: 12, fontWeight: '500', letterSpacing: 1, textTransform: 'uppercase' },
+  flipBackFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0a0a0a', borderWidth: 0.5, borderColor: '#555', paddingVertical: 11, borderRadius: 8, marginTop: 10 },
+  flipBackFooterText: { color: '#fff', fontSize: 12, fontWeight: '500', letterSpacing: 1.5, textTransform: 'uppercase' },
 
   // Overlays (Monochrome replacements for neon colors)
   overlayRight: { position: 'absolute', top: 40, left: 40, transform: [{ rotate: '-15deg' }] },
@@ -110,8 +111,8 @@ export const styles = StyleSheet.create({
   vibeChipActive: { backgroundColor: '#fff', borderColor: '#fff' },
   vibeChipText: { color: '#888', fontWeight: '400', letterSpacing: 0.5 },
   vibeChipTextActive: { color: '#000', fontWeight: '500' },
-  oracleButton: { backgroundColor: 'transparent', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, borderRadius: 12, borderWidth: 0.5, borderColor: '#fff' },
-  oracleButtonText: { color: '#fff', fontSize: 14, fontWeight: '500', letterSpacing: 2, textTransform: 'uppercase' },
+  oracleButton: { backgroundColor: 'transparent', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, borderWidth: 0.5, borderColor: '#fff' },
+  oracleButtonText: { color: '#fff', fontSize: 12, fontWeight: '500', letterSpacing: 1.5, textTransform: 'uppercase' },
   oracleResultContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
   errorText: { color: '#ff5252', marginTop: 20, textAlign: 'center', fontSize: 13, letterSpacing: 0.5 },
 
@@ -160,8 +161,8 @@ export const styles = StyleSheet.create({
   editStatusButtonActive: { backgroundColor: '#fff', borderColor: '#fff' },
   editStatusButtonText: { color: '#666', fontWeight: '500', fontSize: 11, marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' },
   editStatusButtonTextActive: { color: '#000' },
-  removeButton: { marginTop: 20, marginBottom: 30, backgroundColor: 'transparent', paddingVertical: 15, borderRadius: 8, borderWidth: 0.5, borderColor: '#444', alignItems: 'center', flexDirection: 'row', justifyContent: 'center' },
-  removeButtonText: { color: '#666', fontWeight: '400', fontSize: 14, marginLeft: 8, letterSpacing: 1, textTransform: 'uppercase' },
+  removeButton: { marginTop: 20, marginBottom: 30, backgroundColor: 'transparent', paddingVertical: 12, borderRadius: 8, borderWidth: 0.5, borderColor: '#444', alignItems: 'center', flexDirection: 'row', justifyContent: 'center' },
+  removeButtonText: { color: '#888', fontWeight: '500', fontSize: 12, marginLeft: 8, letterSpacing: 1.5, textTransform: 'uppercase' },
 
   // Custom Confirm Modal
   confirmOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center', padding: 20 },
@@ -169,17 +170,17 @@ export const styles = StyleSheet.create({
   confirmTitle: { color: '#fff', fontSize: 18, fontWeight: '400', marginBottom: 15, textAlign: 'center', letterSpacing: 1, textTransform: 'uppercase' },
   confirmText: { color: '#888', fontSize: 14, textAlign: 'center', marginBottom: 30, lineHeight: 22, fontWeight: '300' },
   confirmButtonRow: { flexDirection: 'row', gap: 15, width: '100%' },
-  confirmCancelBtn: { flex: 1, paddingVertical: 12, borderRadius: 8, backgroundColor: '#111', alignItems: 'center', borderWidth: 0.5, borderColor: '#333' },
-  confirmCancelText: { color: '#aaa', fontWeight: '400', fontSize: 13, letterSpacing: 1, textTransform: 'uppercase' },
-  confirmDeleteBtn: { flex: 1, paddingVertical: 12, borderRadius: 8, backgroundColor: '#fff', alignItems: 'center' },
-  confirmDeleteText: { color: '#000', fontWeight: '500', fontSize: 13, letterSpacing: 1, textTransform: 'uppercase' },
+  confirmCancelBtn: { flex: 1, paddingVertical: 11, borderRadius: 8, backgroundColor: '#111', alignItems: 'center', borderWidth: 0.5, borderColor: '#333' },
+  confirmCancelText: { color: '#aaa', fontWeight: '500', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase' },
+  confirmDeleteBtn: { flex: 1, paddingVertical: 11, borderRadius: 8, backgroundColor: '#fff', alignItems: 'center' },
+  confirmDeleteText: { color: '#000', fontWeight: '600', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase' },
 
   // Add Game (Search) Modal
   addModalContainer: { backgroundColor: '#000', flex: 1, marginTop: 50, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, borderWidth: 0.5, borderColor: '#333' },
   addModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   addModalTitle: { fontSize: 20, fontWeight: '400', color: '#fff', letterSpacing: 1, textTransform: 'uppercase' },
   addSearchRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
-  addSearchInput: { flex: 1, backgroundColor: '#0a0a0a', borderRadius: 8, paddingHorizontal: 15, paddingVertical: 12, color: '#fff', fontSize: 14, borderWidth: 0.5, borderColor: '#333', fontWeight: '300', letterSpacing: 0.5 },
+  addSearchInput: { flex: 1, backgroundColor: '#0a0a0a', borderRadius: 8, paddingHorizontal: 15, paddingVertical: 12, color: '#fff', fontSize: 14, borderWidth: 0.5, borderColor: '#333', fontWeight: '300', letterSpacing: 0.5, outlineStyle: 'none' },
   addSearchBtn: { backgroundColor: 'transparent', paddingHorizontal: 20, justifyContent: 'center', alignItems: 'center', borderRadius: 8, borderWidth: 0.5, borderColor: '#fff' },
   addResultItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0a0a0a', padding: 12, borderRadius: 8, marginBottom: 10, borderWidth: 0.5, borderColor: '#222' },
   addResultImage: { width: 40, height: 60, borderRadius: 6, backgroundColor: '#111' },

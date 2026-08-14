@@ -86,7 +86,7 @@ export const OracleScreen = ({ library, onSaveToLibrary }) => {
               {source === 'backlog' && (
                 isStarted ? (
                   <View style={[styles.oracleButton, { backgroundColor: '#ff9f0a', borderColor: '#ff9f0a' }]}>
-                    <Ionicons name="checkmark-circle" size={20} color="#000" style={{ marginRight: 8 }} />
+                    <Ionicons name="checkmark-circle" size={16} color="#000" style={{ marginRight: 6 }} />
                     <Text style={[styles.oracleButtonText, { color: '#000' }]}>Moved to Now Playing!</Text>
                   </View>
                 ) : (
@@ -94,7 +94,7 @@ export const OracleScreen = ({ library, onSaveToLibrary }) => {
                     style={[styles.oracleButton, { backgroundColor: '#fff', borderColor: '#fff' }]} 
                     onPress={handleStartPlaying}
                   >
-                    <Ionicons name="play-circle" size={20} color="#000" style={{ marginRight: 8 }} />
+                    <Ionicons name="play-circle" size={16} color="#000" style={{ marginRight: 6 }} />
                     <Text style={[styles.oracleButtonText, { color: '#000' }]}>Start Playing Now</Text>
                   </TouchableOpacity>
                 )
@@ -107,7 +107,7 @@ export const OracleScreen = ({ library, onSaveToLibrary }) => {
                   setIsStarted(false);
                 }}
               >
-                <Ionicons name="refresh-outline" size={20} color="#fff" style={{ marginRight: 10 }} />
+                <Ionicons name="refresh-outline" size={15} color="#fff" style={{ marginRight: 6 }} />
                 <Text style={styles.oracleButtonText}>Ask Again</Text>
               </TouchableOpacity>
             </View>
@@ -157,7 +157,7 @@ export const OracleScreen = ({ library, onSaveToLibrary }) => {
 
         <View style={{ flex: 1, justifyContent: 'flex-end', paddingBottom: 10 }}>
           <TouchableOpacity style={styles.oracleButton} onPress={handleConsultOracle}>
-            <Ionicons name="sparkles" size={20} color="#fff" style={{ marginRight: 10 }} />
+            <Ionicons name="sparkles" size={15} color="#fff" style={{ marginRight: 8 }} />
             <Text style={styles.oracleButtonText}>Reveal Game</Text>
           </TouchableOpacity>
         </View>

@@ -205,8 +205,12 @@ export const fetchGamesFromIGDB = async (filterMode, library) => {
 export const searchGamesFromIGDB = async (query) => {
   const endpoints = getProxyEndpoints();
 
-  const safeQuery = query.replace(/"/g, '');
-  const bodyQuery = `search "${safeQuery}"; fields name, summary, rating, rating_count, first_release_date, cover.image_id, screenshots.image_id, genres.name, platforms.name, game_modes.name, themes.name, player_perspectives.name, involved_companies.company.name, involved_companies.developer, similar_games.name; where cover != null; limit 20;`;
+  const safeQuery = (query || '').replace(/["\\]/g, '').trim();
+  if (!safeQuery) {
+    return { data: [], error: false };
+  }
+
+  const bodyQuery = `search "${safeQuery}"; fields name, summary, rating, rating_count, first_release_date, cover.image_id, screenshots.image_id, genres.name, platforms.name, game_modes.name, themes.name, player_perspectives.name, involved_companies.company.name, involved_companies.developer, similar_games.name; limit 25;`;
 
   let successData = null;
 
@@ -219,7 +223,7 @@ export const searchGamesFromIGDB = async (query) => {
           'Content-Type': 'text/plain'
         },
         body: bodyQuery
-      }, 5000);
+      }, 8000);
 
       if (response.ok) {
         const data = await response.json();
@@ -228,7 +232,9 @@ export const searchGamesFromIGDB = async (query) => {
           break;
         }
       }
-    } catch (err) {}
+    } catch (err) {
+      console.warn(`[IGDB Search proxy error at ${url}]:`, err?.message || err);
+    }
   }
 
   if (successData) {

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, PanResponder, TextInput } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export const ScoreSlider = ({ score = 0, onChange }) => {
   const [trackWidth, setTrackWidth] = useState(0);
@@ -89,7 +90,7 @@ export const ScoreSlider = ({ score = 0, onChange }) => {
             </View>
           ) : (
             <Text style={[styles.badgeText, { color: getBadgeColor(score) }]}>
-              {score} <Text style={styles.badgeMax}>/ 100 ✏️</Text>
+              {score} <Text style={styles.badgeMax}>/ 100</Text>
             </Text>
           )}
         </TouchableOpacity>

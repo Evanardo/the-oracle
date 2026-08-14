@@ -76,6 +76,7 @@ export const StackScreen = ({ library, isLoaded = true, onSaveToLibrary, onRemov
     if (direction === 'left') toValue = { x: -SCREEN_WIDTH * 1.5, y: dy };
     if (direction === 'down') toValue = { x: dx, y: SCREEN_HEIGHT * 1.5 };
     if (direction === 'up') toValue = { x: dx, y: -SCREEN_HEIGHT * 1.5 };
+    if (direction === 'skip') toValue = { x: SCREEN_WIDTH * 1.5, y: -SCREEN_HEIGHT * 1.5 }; // Diagonal exit
 
     Animated.timing(position, {
       toValue,
@@ -103,6 +104,11 @@ export const StackScreen = ({ library, isLoaded = true, onSaveToLibrary, onRemov
       });
     }
 
+    if (direction === 'skip') {
+      // Re-add to the end of the queue so it renders later
+      setGamesStack(prev => [...prev, currentGame]);
+    }
+
     setSwipeHistory(prev => [...prev, { index: idx, direction, game: currentGame }]);
 
     position.setValue({ x: 0, y: 0 });
@@ -122,7 +128,10 @@ export const StackScreen = ({ library, isLoaded = true, onSaveToLibrary, onRemov
     
     const lastSwipe = swipeHistory[swipeHistory.length - 1];
     
-    if (lastSwipe.direction !== 'left') {
+    if (lastSwipe.direction === 'skip') {
+      // Remove the duplicated game from the end of the stack
+      setGamesStack(prev => prev.slice(0, -1));
+    } else if (lastSwipe.direction !== 'left') {
       onRemoveFromLibrary(lastSwipe.game.id);
     }
     
@@ -132,6 +141,7 @@ export const StackScreen = ({ library, isLoaded = true, onSaveToLibrary, onRemov
     if (lastSwipe.direction === 'left') startValue = { x: -SCREEN_WIDTH * 1.5, y: 0 };
     if (lastSwipe.direction === 'down') startValue = { x: 0, y: SCREEN_HEIGHT * 1.5 };
     if (lastSwipe.direction === 'up') startValue = { x: 0, y: -SCREEN_HEIGHT * 1.5 };
+    if (lastSwipe.direction === 'skip') startValue = { x: SCREEN_WIDTH * 1.5, y: -SCREEN_HEIGHT * 1.5 };
 
     position.setValue(startValue);
     setCurrentIndex(lastSwipe.index);
@@ -244,6 +254,13 @@ export const StackScreen = ({ library, isLoaded = true, onSaveToLibrary, onRemov
             disabled={swipeHistory.length === 0}
           >
             <Ionicons name="play-back" size={20} color={swipeHistory.length === 0 ? "#555" : "#fff"} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.stackActionButton, styles.stackActionButtonSkip]} 
+            onPress={() => forceSwipe('skip', SCREEN_WIDTH, -SCREEN_HEIGHT)}
+          >
+            <Ionicons name="play-skip-forward" size={18} color="#fff" />
           </TouchableOpacity>
 
           <TouchableOpacity 
