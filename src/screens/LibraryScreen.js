@@ -89,18 +89,27 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary, o
       return;
     }
     setIsSearching(true);
-    const { data, error } = await searchGamesFromIGDB(trimmed);
-    if (!error && data) {
-      setAddSearchResults(data);
-    } else {
+    try {
+      const { data, error } = await searchGamesFromIGDB(trimmed);
+      if (!error && Array.isArray(data)) {
+        setAddSearchResults(data);
+      } else {
+        setAddSearchResults([]);
+      }
+    } catch (err) {
+      console.error('Search error:', err);
       setAddSearchResults([]);
+    } finally {
+      setIsSearching(false);
     }
-    setIsSearching(false);
   };
 
   // Debounced auto-search as the user types
   useEffect(() => {
-    if (!isAddModalVisible) return;
+    if (!isAddModalVisible) {
+      setIsSearching(false);
+      return;
+    }
     const trimmed = addSearchQuery.trim();
     if (!trimmed) {
       setAddSearchResults([]);
@@ -108,16 +117,22 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary, o
       return;
     }
 
-    setIsSearching(true);
     const timer = setTimeout(async () => {
-      const { data, error } = await searchGamesFromIGDB(trimmed);
-      if (!error && data) {
-        setAddSearchResults(data);
-      } else {
+      setIsSearching(true);
+      try {
+        const { data, error } = await searchGamesFromIGDB(trimmed);
+        if (!error && Array.isArray(data)) {
+          setAddSearchResults(data);
+        } else {
+          setAddSearchResults([]);
+        }
+      } catch (err) {
+        console.error('Debounced search error:', err);
         setAddSearchResults([]);
+      } finally {
+        setIsSearching(false);
       }
-      setIsSearching(false);
-    }, 400);
+    }, 350);
 
     return () => clearTimeout(timer);
   }, [addSearchQuery, isAddModalVisible]);

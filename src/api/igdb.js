@@ -18,121 +18,162 @@ const fetchWithTimeout = async (url, options = {}, timeoutMs = 3000) => {
 };
 
 const determineVibe = (igdbGame) => {
-  const genres = igdbGame.genres?.map(g => g.name.toLowerCase()) || [];
-  const themes = igdbGame.themes?.map(t => t.name.toLowerCase()) || [];
-  
-  const has = (arr, keywords) => keywords.some(k => arr.some(item => item.includes(k)));
+  try {
+    const genres = (igdbGame?.genres || []).map(g => (g?.name || '').toLowerCase()).filter(Boolean);
+    const themes = (igdbGame?.themes || []).map(t => (t?.name || '').toLowerCase()).filter(Boolean);
+    
+    const has = (arr, keywords) => keywords.some(k => arr.some(item => item.includes(k)));
 
-  // Dark
-  if (has(genres, ['horror']) || has(themes, ['horror'])) {
-    return 'Dark';
-  }
-  // Relaxing
-  if (has(genres, ['simulator', 'puzzle', 'music', 'casual']) || has(themes, ['educational', 'kids'])) {
-    return 'Relaxing';
-  }
-  // Sweaty
-  if (has(genres, ['moba', 'fighting', 'sport']) || has(themes, ['competitive', 'esports'])) {
-    return 'Sweaty';
-  }
-  // Strategic
-  if (has(genres, ['strategy', 'tactical', 'turn-based', 'card', 'board', 'rts'])) {
-    return 'Strategic';
-  }
-  // Narrative
-  if (has(genres, ['role-playing', 'rpg', 'point-and-click', 'visual novel']) || has(themes, ['mystery', 'drama'])) {
+    // Dark
+    if (has(genres, ['horror']) || has(themes, ['horror'])) return 'Dark';
+    // Relaxing
+    if (has(genres, ['simulator', 'puzzle', 'music', 'casual']) || has(themes, ['educational', 'kids'])) return 'Relaxing';
+    // Sweaty
+    if (has(genres, ['moba', 'fighting', 'sport']) || has(themes, ['competitive', 'esports'])) return 'Sweaty';
+    // Strategic
+    if (has(genres, ['strategy', 'tactical', 'turn-based', 'card', 'board', 'rts'])) return 'Strategic';
+    // Narrative
+    if (has(genres, ['role-playing', 'rpg', 'point-and-click', 'visual novel']) || has(themes, ['mystery', 'drama'])) return 'Narrative';
+    // Brain-Off
+    if (has(genres, ['platform', 'arcade', 'pinball', 'racing'])) return 'Brain-Off';
+    // Intense (Action default)
+    if (has(genres, ['shooter', 'hack and slash', 'action'])) return 'Intense';
+
+    return 'Narrative';
+  } catch (e) {
     return 'Narrative';
   }
-  // Brain-Off
-  if (has(genres, ['platform', 'arcade', 'pinball', 'racing'])) {
-    return 'Brain-Off';
-  }
-  // Intense (Action default)
-  if (has(genres, ['shooter', 'hack and slash', 'action'])) {
-    return 'Intense';
-  }
-
-  // Fallback
-  return 'Narrative'; 
 };
 
 const determineIsPauseable = (igdbGame) => {
-  const name = (igdbGame.name || '').toLowerCase();
-  
-  // Souls-like games notoriously don't have a pause menu
-  const unpauseableFranchises = ['dark souls', 'bloodborne', 'elden ring', 'sekiro', "demon's souls", 'nioh', 'lies of p'];
-  if (unpauseableFranchises.some(f => name.includes(f))) {
-    return false;
+  try {
+    const name = (igdbGame?.name || '').toLowerCase();
+    
+    // Souls-like games notoriously don't have a pause menu
+    const unpauseableFranchises = ['dark souls', 'bloodborne', 'elden ring', 'sekiro', "demon's souls", 'nioh', 'lies of p'];
+    if (unpauseableFranchises.some(f => name.includes(f))) {
+      return false;
+    }
+    
+    // Check if it's strictly multiplayer/MMO
+    const modes = (igdbGame?.game_modes || []).map(m => (m?.name || '').toLowerCase()).filter(Boolean);
+    if (modes.includes('massively multiplayer online (mmo)') || 
+       (modes.includes('multiplayer') && !modes.includes('single player'))) {
+      return false;
+    }
+    
+    return true;
+  } catch (e) {
+    return true;
   }
-  
-  // Check if it's strictly multiplayer/MMO
-  const modes = igdbGame.game_modes?.map(m => m.name.toLowerCase()) || [];
-  if (modes.includes('massively multiplayer online (mmo)') || 
-     (modes.includes('multiplayer') && !modes.includes('single player'))) {
-    return false;
-  }
-  
-  return true;
 };
 
 const mapIGDBToAppFormat = (igdbGame) => {
-  const developerObj = igdbGame.involved_companies?.find(c => c.developer);
-  const developer = developerObj?.company?.name || 'Unknown Developer';
-  
-  const tags = igdbGame.genres?.slice(0, 2).map(g => g.name).join(' • ') || 'Uncategorized';
-  
-  const ratingScore = igdbGame.rating ? Math.round(igdbGame.rating) : null;
-  
-  const releaseYear = igdbGame.first_release_date 
-    ? new Date(igdbGame.first_release_date * 1000).getFullYear()
-    : null;
-
-  const platformList = igdbGame.platforms?.map(p => {
-    let n = p.name;
-    if (n.includes('PC')) return 'PC';
-    if (n.includes('PlayStation 5')) return 'PS5';
-    if (n.includes('PlayStation 4')) return 'PS4';
-    if (n.includes('Nintendo Switch')) return 'Switch';
-    if (n.includes('Xbox Series')) return 'Xbox Series X';
-    if (n.includes('Xbox One')) return 'Xbox One';
-    return n;
-  });
-  const platforms = platformList ? Array.from(new Set(platformList)).slice(0, 3).join(' • ') : 'Console / PC';
-
-  const similarGames = igdbGame.similar_games?.slice(0, 3).map(s => s.name).join(' • ') || null;
-  const gameModes = igdbGame.game_modes?.slice(0, 2).map(m => m.name).join(' • ') || 'Single Player';
-  const perspective = igdbGame.player_perspectives?.map(p => p.name).join(', ') || 'Standard';
-
-  const coverUrl = igdbGame.cover?.image_id 
-    ? `https://images.igdb.com/igdb/image/upload/t_720p/${igdbGame.cover.image_id}.jpg` 
-    : null;
-
-  let screenshots = igdbGame.screenshots
-    ? igdbGame.screenshots.map(s => `https://images.igdb.com/igdb/image/upload/t_720p/${s.image_id}.jpg`)
-    : [];
+  try {
+    if (!igdbGame) return null;
+    const developerObj = (igdbGame.involved_companies || []).find(c => c?.developer);
+    const developer = developerObj?.company?.name || 'Unknown Developer';
     
-  if (screenshots.length === 0 && coverUrl) {
-    screenshots = [coverUrl];
-  }
+    const tags = (igdbGame.genres || [])
+      .slice(0, 2)
+      .map(g => g?.name)
+      .filter(Boolean)
+      .join(' • ') || 'Uncategorized';
+    
+    const ratingScore = (typeof igdbGame.rating === 'number' && !isNaN(igdbGame.rating))
+      ? Math.round(igdbGame.rating)
+      : null;
+    
+    const releaseYear = igdbGame.first_release_date 
+      ? new Date(igdbGame.first_release_date * 1000).getFullYear()
+      : null;
 
-  return {
-    id: igdbGame.id ? igdbGame.id.toString() : Math.random().toString(),
-    title: igdbGame.name || 'Untitled Game',
-    developer,
-    releaseYear,
-    ratingScore,
-    platforms,
-    similarGames,
-    gameModes,
-    perspective,
-    tags,
-    vibe: determineVibe(igdbGame),
-    time: 'Flexible', 
-    isPauseable: determineIsPauseable(igdbGame),
-    description: igdbGame.summary || 'No description available.',
-    coverUrl,
-    screenshots
-  };
+    const platformList = (igdbGame.platforms || [])
+      .map(p => {
+        const n = p?.name;
+        if (!n || typeof n !== 'string') return null;
+        if (n.includes('PC')) return 'PC';
+        if (n.includes('PlayStation 5')) return 'PS5';
+        if (n.includes('PlayStation 4')) return 'PS4';
+        if (n.includes('Nintendo Switch')) return 'Switch';
+        if (n.includes('Xbox Series')) return 'Xbox Series X';
+        if (n.includes('Xbox One')) return 'Xbox One';
+        return n;
+      })
+      .filter(Boolean);
+
+    const platforms = platformList.length > 0
+      ? Array.from(new Set(platformList)).slice(0, 3).join(' • ')
+      : 'Console / PC';
+
+    const similarGames = (igdbGame.similar_games || [])
+      .slice(0, 3)
+      .map(s => s?.name)
+      .filter(Boolean)
+      .join(' • ') || null;
+
+    const gameModes = (igdbGame.game_modes || [])
+      .slice(0, 2)
+      .map(m => m?.name)
+      .filter(Boolean)
+      .join(' • ') || 'Single Player';
+
+    const perspective = (igdbGame.player_perspectives || [])
+      .map(p => p?.name)
+      .filter(Boolean)
+      .join(', ') || 'Standard';
+
+    const coverUrl = igdbGame.cover?.image_id 
+      ? `https://images.igdb.com/igdb/image/upload/t_720p/${igdbGame.cover.image_id}.jpg` 
+      : null;
+
+    let screenshots = (igdbGame.screenshots || [])
+      .filter(s => s?.image_id)
+      .map(s => `https://images.igdb.com/igdb/image/upload/t_720p/${s.image_id}.jpg`);
+      
+    if (screenshots.length === 0 && coverUrl) {
+      screenshots = [coverUrl];
+    }
+
+    return {
+      id: igdbGame.id ? String(igdbGame.id) : Math.random().toString(),
+      title: igdbGame.name || 'Untitled Game',
+      developer,
+      releaseYear: isNaN(releaseYear) ? null : releaseYear,
+      ratingScore,
+      platforms,
+      similarGames,
+      gameModes,
+      perspective,
+      tags,
+      vibe: determineVibe(igdbGame),
+      time: 'Flexible', 
+      isPauseable: determineIsPauseable(igdbGame),
+      description: igdbGame.summary || 'No description available.',
+      coverUrl,
+      screenshots
+    };
+  } catch (err) {
+    console.error('[mapIGDBToAppFormat error]:', err);
+    return {
+      id: igdbGame?.id ? String(igdbGame.id) : Math.random().toString(),
+      title: igdbGame?.name || 'Untitled Game',
+      developer: 'Unknown Developer',
+      releaseYear: null,
+      ratingScore: null,
+      platforms: 'Console / PC',
+      similarGames: null,
+      gameModes: 'Single Player',
+      perspective: 'Standard',
+      tags: 'Uncategorized',
+      vibe: 'Narrative',
+      time: 'Flexible',
+      isPauseable: true,
+      description: igdbGame?.summary || 'No description available.',
+      coverUrl: null,
+      screenshots: []
+    };
+  }
 };
 
 const getProxyEndpoints = () => {
@@ -140,17 +181,18 @@ const getProxyEndpoints = () => {
     return [process.env.EXPO_PUBLIC_PROXY_URL];
   }
 
-  let currentHost = 'localhost';
+  const endpoints = [];
   if (typeof window !== 'undefined' && window.location?.hostname) {
-    currentHost = window.location.hostname;
-  } else if (Constants.expoConfig?.hostUri) {
-    currentHost = Constants.expoConfig.hostUri.split(':')[0];
+    endpoints.push(`http://${window.location.hostname}:3001`);
   }
+  if (Constants.expoConfig?.hostUri) {
+    const host = Constants.expoConfig.hostUri.split(':')[0];
+    endpoints.push(`http://${host}:3001`);
+  }
+  endpoints.push('http://localhost:3001');
+  endpoints.push('http://127.0.0.1:3001');
 
-  return Array.from(new Set([
-    `http://${currentHost}:3001`,
-    'http://localhost:3001'
-  ]));
+  return Array.from(new Set(endpoints));
 };
 
 export const fetchGamesFromIGDB = async (filterMode, library) => {

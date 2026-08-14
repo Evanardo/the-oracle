@@ -8,20 +8,23 @@ const axios = require('axios');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// 1. Security Headers
-app.use(helmet());
+// 1. Security Headers configured for Cross-Origin API access
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginOpenerPolicy: false,
+}));
 
-// 2. CORS configuration (Allow all for local MVP, lock down for production)
+// 2. CORS configuration
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type']
+  allowedHeaders: ['Content-Type', 'Accept']
 }));
 
-// 3. Rate Limiting (Prevent abuse / DDoS if hosted publicly)
+// 3. Rate Limiting (Generous for development and search indexing)
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  max: 5000, // Generous limit for search queries
   standardHeaders: true, 
   legacyHeaders: false, 
   message: { error: 'Too many requests from this IP, please try again after 15 minutes' }
