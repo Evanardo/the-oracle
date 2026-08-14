@@ -51,6 +51,7 @@ app.post('/', async (req, res) => {
   `;
 
   const bodyQuery = req.body || defaultQuery;
+  console.log(`[${new Date().toISOString()}] Received request from ${req.ip} with body:`, bodyQuery.substring(0, 50) + '...');
 
   try {
     const response = await axios({

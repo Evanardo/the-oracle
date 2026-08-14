@@ -26,8 +26,14 @@ export const UpdateJournalModal = ({ visible, game, onClose, onSave }) => {
   }, [game, visible]);
 
   const handleSave = () => {
+    let newStatus = game?.status || 'backlog';
+    if (disposition === 'Playing') newStatus = 'playing';
+    else if (disposition === 'Backlog' || disposition === 'On Hold') newStatus = 'backlog';
+    else if (disposition === 'Completed' || disposition === 'Dropped') newStatus = 'played';
+
     const updatedGame = {
       ...game,
+      status: newStatus,
       score,
       hoursPlayed: hours ? parseInt(hours, 10) : 0,
       disposition,

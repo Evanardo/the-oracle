@@ -144,7 +144,7 @@ export default function AddGameProfileModal({ visible, onClose, onSave }) {
           {/* Game Title Input */}
           <Text style={styles.label}>GAME TITLE *</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { outlineStyle: 'none' }]}
             placeholder="e.g. Chrono Trigger"
             placeholderTextColor="#555555"
             value={title}

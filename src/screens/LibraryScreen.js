@@ -13,6 +13,7 @@ import EditGameProfileModal from '../components/EditGameProfileModal';
 import { UpdateJournalModal } from '../components/UpdateJournalModal';
 import { ScreenshotGallery } from '../components/ScreenshotGallery';
 import { processGameProfileAsset } from '../utils/vaultStorage';
+import { searchGamesFromIGDB } from '../api/igdb';
 
 const CONSOLE_FILTERS = [
   'ALL',
@@ -49,6 +50,7 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary, o
   const [addSearchQuery, setAddSearchQuery] = useState('');
   const [addSearchResults, setAddSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
   // Single-pass Collection Stats (Owned = Playing + Backlog + Played)
   const { playingCount, backlogCount, wishlistCount, playedCount, allCount, totalOwnedCount } = useMemo(() => {
@@ -81,61 +83,55 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary, o
     { id: 'played', label: 'Played', count: playedCount },
   ];
 
-  const handleSearchIGDB = async () => {
-    const trimmed = addSearchQuery.trim();
-    if (!trimmed) {
-      setAddSearchResults([]);
-      setIsSearching(false);
-      return;
+  const searchAbortControllerRef = useRef(null);
+
+  const executeSearch = async (queryToSearch) => {
+    if (!queryToSearch.trim()) return;
+
+    if (searchAbortControllerRef.current) {
+      searchAbortControllerRef.current.abort();
     }
+    const abortController = new AbortController();
+    searchAbortControllerRef.current = abortController;
+
     setIsSearching(true);
+    setHasSearched(false);
     try {
-      const { data, error } = await searchGamesFromIGDB(trimmed);
-      if (!error && Array.isArray(data)) {
-        setAddSearchResults(data);
-      } else {
-        setAddSearchResults([]);
-      }
-    } catch (err) {
-      console.error('Search error:', err);
-      setAddSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  // Debounced auto-search as the user types
-  useEffect(() => {
-    if (!isAddModalVisible) {
-      setIsSearching(false);
-      return;
-    }
-    const trimmed = addSearchQuery.trim();
-    if (!trimmed) {
-      setAddSearchResults([]);
-      setIsSearching(false);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      setIsSearching(true);
-      try {
-        const { data, error } = await searchGamesFromIGDB(trimmed);
+      const { data, error } = await searchGamesFromIGDB(queryToSearch, abortController.signal);
+      if (!abortController.signal.aborted) {
         if (!error && Array.isArray(data)) {
           setAddSearchResults(data);
         } else {
           setAddSearchResults([]);
         }
-      } catch (err) {
-        console.error('Debounced search error:', err);
-        setAddSearchResults([]);
-      } finally {
-        setIsSearching(false);
       }
-    }, 350);
+    } catch (err) {
+      if (!abortController.signal.aborted) {
+        console.error('Search error:', err);
+        setAddSearchResults([]);
+      }
+    } finally {
+      if (!abortController.signal.aborted) {
+        setIsSearching(false);
+        setHasSearched(true);
+      }
+    }
+  };
 
-    return () => clearTimeout(timer);
-  }, [addSearchQuery, isAddModalVisible]);
+  const handleSearchIGDB = () => executeSearch(addSearchQuery);
+
+  // Clear search state when modal closes
+  useEffect(() => {
+    if (!isAddModalVisible) {
+      setIsSearching(false);
+      setHasSearched(false);
+      setAddSearchResults([]);
+      setAddSearchQuery('');
+      if (searchAbortControllerRef.current) {
+        searchAbortControllerRef.current.abort();
+      }
+    }
+  }, [isAddModalVisible]);
 
   const handleAddGame = (game, status) => {
     onSaveToLibrary({ ...game, status });
@@ -722,7 +718,7 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary, o
 
             <View style={styles.addSearchRow}>
               <TextInput
-                style={styles.addSearchInput}
+                style={[styles.addSearchInput, { outlineStyle: 'none' }]}
                 placeholder="Search database..."
                 placeholderTextColor="#666"
                 value={addSearchQuery}
@@ -758,7 +754,7 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary, o
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
                 ListEmptyComponent={() => (
-                  addSearchQuery.length > 0 && addSearchResults.length === 0 ? (
+                  hasSearched && addSearchResults.length === 0 ? (
                     <Text style={styles.addEmptyText}>No games found.</Text>
                   ) : null
                 )}

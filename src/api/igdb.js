@@ -1,12 +1,20 @@
 import Constants from 'expo-constants';
 import { VIBES } from '../utils/constants';
 
-const fetchWithTimeout = async (url, options = {}, timeoutMs = 3000) => {
+const fetchWithTimeout = async (url, options = {}, timeoutMs = 8000, callerSignal = null) => {
   if (typeof AbortController === 'undefined') {
     return fetch(url, options);
   }
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  if (callerSignal) {
+    if (typeof callerSignal.addEventListener === 'function') {
+      callerSignal.addEventListener('abort', () => controller.abort());
+    } else {
+      callerSignal.onabort = () => controller.abort();
+    }
+  }
+
   try {
     const response = await fetch(url, { ...options, signal: controller.signal });
     clearTimeout(timeoutId);
@@ -244,7 +252,7 @@ export const fetchGamesFromIGDB = async (filterMode, library) => {
   }
 };
 
-export const searchGamesFromIGDB = async (query) => {
+export const searchGamesFromIGDB = async (query, abortSignal = null) => {
   const endpoints = getProxyEndpoints();
 
   const safeQuery = (query || '').replace(/["\\]/g, '').trim();
@@ -256,8 +264,11 @@ export const searchGamesFromIGDB = async (query) => {
 
   let successData = null;
 
+  console.log(`[IGDB Search] Attempting search for: "${safeQuery}"`);
+
   for (const url of endpoints) {
     try {
+      console.log(`[IGDB Search] Trying endpoint: ${url}`);
       const response = await fetchWithTimeout(url, {
         method: 'POST',
         headers: {
@@ -265,14 +276,17 @@ export const searchGamesFromIGDB = async (query) => {
           'Content-Type': 'text/plain'
         },
         body: bodyQuery
-      }, 8000);
+      }, 8000, abortSignal);
 
       if (response.ok) {
         const data = await response.json();
+        console.log(`[IGDB Search] Endpoint ${url} succeeded with ${data.length} results.`);
         if (Array.isArray(data)) {
           successData = data;
           break;
         }
+      } else {
+        console.error(`[IGDB Search] Endpoint ${url} returned HTTP ${response.status}`);
       }
     } catch (err) {
       console.warn(`[IGDB Search proxy error at ${url}]:`, err?.message || err);
@@ -281,8 +295,10 @@ export const searchGamesFromIGDB = async (query) => {
 
   if (successData) {
     const formattedGames = successData.map(mapIGDBToAppFormat);
+    console.log(`[IGDB Search] Successfully formatted ${formattedGames.length} games.`);
     return { data: formattedGames, error: false };
   } else {
+    console.error(`[IGDB Search] All endpoints failed.`);
     return { data: [], error: true };
   }
 };
