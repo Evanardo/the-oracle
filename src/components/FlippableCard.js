@@ -102,15 +102,17 @@ export const FlippableCard = React.memo(({
   );
 });
 
-const CardContent = ({ item, onFlip }) => (
-  <View style={styles.cardContentLayout}>
-    {item.coverUrl ? (
-      <Image source={{ uri: item.coverUrl }} style={styles.artImage} resizeMode="cover" />
-    ) : (
-      <View style={styles.artPlaceholder}>
-        <Ionicons name="game-controller-outline" size={48} color="#333" />
-      </View>
-    )}
+const CardContent = ({ item, onFlip }) => {
+  const coverUri = (item.coverUrl || item.coverUri || '').trim();
+  return (
+    <View style={styles.cardContentLayout}>
+      {coverUri.length > 0 ? (
+        <Image source={{ uri: coverUri }} style={styles.artImage} resizeMode="cover" />
+      ) : (
+        <View style={styles.artPlaceholder}>
+          <Ionicons name="game-controller-outline" size={48} color="#333" />
+        </View>
+      )}
     
     <View style={styles.gradientOverlay} />
 
@@ -126,22 +128,23 @@ const CardContent = ({ item, onFlip }) => (
       <Text style={styles.infoFlipButtonText}>Details</Text>
     </TouchableOpacity>
     
-    <View style={styles.cardFooter}>
-      <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
-      <Text style={styles.cardDeveloper} numberOfLines={1}>
-        {item.developer} {item.releaseYear ? `• ${item.releaseYear}` : ''}
-      </Text>
-      <View style={styles.footerPillRow}>
-        <View style={styles.tagPill}>
-          <Text style={styles.tagText}>{item.tags}</Text>
-        </View>
-        <View style={styles.platformPill}>
-          <Text style={styles.platformText} numberOfLines={1}>{item.platforms}</Text>
+      <View style={styles.cardFooter}>
+        <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+        <Text style={styles.cardDeveloper} numberOfLines={1}>
+          {item.developer} {item.releaseYear ? `• ${item.releaseYear}` : ''}
+        </Text>
+        <View style={styles.footerPillRow}>
+          <View style={styles.tagPill}>
+            <Text style={styles.tagText}>{item.tags}</Text>
+          </View>
+          <View style={styles.platformPill}>
+            <Text style={styles.platformText} numberOfLines={1}>{item.platforms}</Text>
+          </View>
         </View>
       </View>
     </View>
-  </View>
-);
+  );
+};
 
 const CardBackContent = ({ item, onFlip }) => (
   <View style={styles.cardBackLayout}>
@@ -183,12 +186,18 @@ const CardBackContent = ({ item, onFlip }) => (
         </View>
       ) : null}
 
-      {(item.screenshots?.length > 0 || item.coverUrl) && (
-        <View style={{ marginBottom: 15 }}>
-          <Text style={styles.cardBackSectionTitle}>SCREENSHOTS</Text>
-          <ScreenshotGallery screenshots={item.screenshots?.length > 0 ? item.screenshots : [item.coverUrl]} />
-        </View>
-      )}
+      {(() => {
+        const coverUri = (item.coverUrl || item.coverUri || '').trim();
+        const validScreenshots = (item.screenshots || []).filter(s => typeof s === 'string' && s.trim().length > 0);
+        const galleryImages = validScreenshots.length > 0 ? validScreenshots : (coverUri ? [coverUri] : []);
+        if (galleryImages.length === 0) return null;
+        return (
+          <View style={{ marginBottom: 15 }}>
+            <Text style={styles.cardBackSectionTitle}>SCREENSHOTS</Text>
+            <ScreenshotGallery screenshots={galleryImages} />
+          </View>
+        );
+      })()}
 
       <Text style={styles.cardBackSectionTitle}>GAME OVERVIEW</Text>
       <Text style={styles.cardBackDescription}>{item.description}</Text>

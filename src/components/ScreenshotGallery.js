@@ -7,24 +7,28 @@ export const ScreenshotGallery = React.memo(({ screenshots }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
   
-  if (!screenshots || screenshots.length === 0) return null;
+  const validScreenshots = (screenshots || []).filter(s => typeof s === 'string' && s.trim().length > 0);
+  
+  if (validScreenshots.length === 0) return null;
 
   const handleNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % screenshots.length);
+    setCurrentIndex((prev) => (prev + 1) % validScreenshots.length);
   };
 
   const handlePrev = () => {
-    setCurrentIndex((prev) => (prev - 1 + screenshots.length) % screenshots.length);
+    setCurrentIndex((prev) => (prev - 1 + validScreenshots.length) % validScreenshots.length);
   };
+
+  const currentUri = validScreenshots[currentIndex] || validScreenshots[0];
 
   return (
     <>
       <View style={styles.galleryContainer}>
         <TouchableOpacity activeOpacity={0.9} onPress={() => setModalVisible(true)} style={{ flex: 1 }}>
-          <Image source={{ uri: screenshots[currentIndex] }} style={styles.galleryImage} resizeMode="cover" />
+          <Image source={{ uri: currentUri }} style={styles.galleryImage} resizeMode="cover" />
         </TouchableOpacity>
         
-        {screenshots.length > 1 && (
+        {validScreenshots.length > 1 && (
           <>
             <TouchableOpacity style={styles.galleryNavLeft} onPress={handlePrev}>
               <Ionicons name="chevron-back-circle" size={32} color="rgba(255,255,255,0.7)" />
@@ -35,7 +39,7 @@ export const ScreenshotGallery = React.memo(({ screenshots }) => {
             </TouchableOpacity>
 
             <View style={styles.galleryDotsContainer}>
-              {screenshots.map((_, i) => (
+              {validScreenshots.map((_, i) => (
                 <View key={i} style={[styles.galleryDot, i === currentIndex && styles.galleryDotActive]} />
               ))}
             </View>
@@ -50,9 +54,9 @@ export const ScreenshotGallery = React.memo(({ screenshots }) => {
           </TouchableOpacity>
           
           <View style={styles.fullscreenImageContainer}>
-            <Image source={{ uri: screenshots[currentIndex] }} style={styles.fullscreenImage} resizeMode="contain" />
+            <Image source={{ uri: currentUri }} style={styles.fullscreenImage} resizeMode="contain" />
             
-            {screenshots.length > 1 && (
+            {validScreenshots.length > 1 && (
               <>
                 <TouchableOpacity style={styles.galleryNavLeft} onPress={handlePrev}>
                   <Ionicons name="chevron-back-circle" size={48} color="rgba(255,255,255,0.8)" />
@@ -63,7 +67,7 @@ export const ScreenshotGallery = React.memo(({ screenshots }) => {
                 </TouchableOpacity>
 
                 <View style={styles.galleryDotsContainer}>
-                  {screenshots.map((_, i) => (
+                  {validScreenshots.map((_, i) => (
                     <View key={i} style={[styles.galleryDot, i === currentIndex && styles.galleryDotActive]} />
                   ))}
                 </View>

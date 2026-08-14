@@ -26,6 +26,13 @@ export const styles = StyleSheet.create({
   emptyState: { alignItems: 'center', justifyContent: 'center' },
   emptyStateText: { color: '#fff', fontSize: 20, fontWeight: '400', marginTop: 15, letterSpacing: 1 },
   emptyStateSubtext: { color: '#666', fontSize: 13, marginTop: 10, textAlign: 'center', letterSpacing: 0.5 },
+  stackActionBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, paddingVertical: 12, paddingBottom: 20 },
+  stackActionButton: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#0a0a0a', borderWidth: 0.5, borderColor: '#333', justifyContent: 'center', alignItems: 'center' },
+  stackActionButtonPass: { borderColor: '#444' },
+  stackActionButtonBacklog: { borderColor: '#888' },
+  stackActionButtonWishlist: { borderColor: '#aaa' },
+  stackActionButtonPlayed: { borderColor: '#fff', backgroundColor: '#111' },
+  stackActionButtonRewind: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#0a0a0a', borderWidth: 0.5, borderColor: '#666', justifyContent: 'center', alignItems: 'center' },
   
   // Card UI & 3D Flip
   card: { position: 'absolute', width: SCREEN_WIDTH * 0.9, height: SCREEN_HEIGHT * 0.65, backgroundColor: '#0a0a0a', borderRadius: 16, borderWidth: 0.5, borderColor: '#333', overflow: 'hidden' },
@@ -148,8 +155,8 @@ export const styles = StyleSheet.create({
 
   // Library Edit Controls
   editStatusContainer: { marginTop: 30 },
-  editStatusRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
-  editStatusButton: { flex: 1, paddingVertical: 12, borderRadius: 8, borderWidth: 0.5, borderColor: '#333', alignItems: 'center', backgroundColor: '#0a0a0a' },
+  editStatusRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10 },
+  editStatusButton: { width: '48%', paddingVertical: 12, borderRadius: 8, borderWidth: 0.5, borderColor: '#333', alignItems: 'center', backgroundColor: '#0a0a0a' },
   editStatusButtonActive: { backgroundColor: '#fff', borderColor: '#fff' },
   editStatusButtonText: { color: '#666', fontWeight: '500', fontSize: 11, marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' },
   editStatusButtonTextActive: { color: '#000' },

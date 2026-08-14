@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Platform, LogBox } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
@@ -33,73 +34,84 @@ console.warn = (...args) => {
 };
 
 export default function App() {
-  const [library, setLibrary] = useState(() => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      try {
-        const saved = window.localStorage.getItem('oracle_library');
-        return saved ? JSON.parse(saved) : [];
-      } catch (e) {
-        return [];
-      }
-    }
-    return [];
-  });
+  const [library, setLibrary] = useState([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
+  // Load and migrate library from local AsyncStorage (with fallback for legacy window.localStorage)
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.localStorage) {
+    const loadLibrary = async () => {
       try {
-        window.localStorage.setItem('oracle_library', JSON.stringify(library));
-      } catch (e) {}
-    }
-  }, [library]);
+        let saved = await AsyncStorage.getItem('oracle_library');
+        if (!saved && typeof window !== 'undefined' && window.localStorage) {
+          saved = window.localStorage.getItem('oracle_library');
+        }
+        let parsedLibrary = saved ? JSON.parse(saved) : [];
 
-  // Migration for vibes and isPauseable
-  useEffect(() => {
-    const migrationFlag = 'library_migration_v3';
-    let hasMigrated = false;
-    if (typeof window !== 'undefined' && window.localStorage) {
-       hasMigrated = window.localStorage.getItem(migrationFlag) === 'true';
-    }
-
-    if (!hasMigrated && library.length > 0) {
-      const migratedLibrary = library.map(game => {
-        const tags = (game.tags || '').toLowerCase();
-        let newVibe = game.vibe || 'Intense'; // fallback
-        
-        // If it was already set to 'Scary' in v1, convert it to 'Dark'
-        if (newVibe === 'Scary') newVibe = 'Dark';
-        
-        // Original v1 logic, updated for 'Dark'
-        if (tags.includes('horror')) newVibe = 'Dark';
-        else if (tags.includes('simulator') || tags.includes('puzzle') || tags.includes('casual')) newVibe = 'Relaxing';
-        else if (tags.includes('moba') || tags.includes('fighting') || tags.includes('sport')) newVibe = 'Sweaty';
-        else if (tags.includes('strategy') || tags.includes('tactical') || tags.includes('turn-based')) newVibe = 'Strategic';
-        else if (tags.includes('role-playing') || tags.includes('rpg') || tags.includes('point-and-click') || tags.includes('visual novel')) newVibe = 'Narrative';
-        else if (tags.includes('platform') || tags.includes('arcade') || tags.includes('racing')) newVibe = 'Brain-Off';
-        else if (tags.includes('shooter') || tags.includes('hack and slash') || tags.includes('action')) newVibe = 'Intense';
-
-        // Recalculate isPauseable for existing games
-        const name = (game.title || '').toLowerCase();
-        const modes = (game.gameModes || '').toLowerCase();
-        const unpauseableFranchises = ['dark souls', 'bloodborne', 'elden ring', 'sekiro', "demon's souls", 'nioh', 'lies of p'];
-        let isPauseable = true;
-        
-        if (unpauseableFranchises.some(f => name.includes(f))) {
-          isPauseable = false;
-        } else if (modes.includes('massively multiplayer online') || 
-                  (modes.includes('multiplayer') && !modes.includes('single player'))) {
-          isPauseable = false;
+        let hasMigrated = await AsyncStorage.getItem('library_migration_v3');
+        if (!hasMigrated && typeof window !== 'undefined' && window.localStorage) {
+          hasMigrated = window.localStorage.getItem('library_migration_v3') === 'true';
         }
 
-        return { ...game, vibe: newVibe, isPauseable };
-      });
-      
-      setLibrary(migratedLibrary);
-      if (typeof window !== 'undefined' && window.localStorage) {
-         window.localStorage.setItem(migrationFlag, 'true');
+        if (!hasMigrated && parsedLibrary.length > 0) {
+          parsedLibrary = parsedLibrary.map(game => {
+            const tags = (game.tags || '').toLowerCase();
+            let newVibe = game.vibe || 'Intense'; // fallback
+            
+            // If it was already set to 'Scary' in v1, convert it to 'Dark'
+            if (newVibe === 'Scary') newVibe = 'Dark';
+            
+            // Original v1 logic, updated for 'Dark'
+            if (tags.includes('horror')) newVibe = 'Dark';
+            else if (tags.includes('simulator') || tags.includes('puzzle') || tags.includes('casual')) newVibe = 'Relaxing';
+            else if (tags.includes('moba') || tags.includes('fighting') || tags.includes('sport')) newVibe = 'Sweaty';
+            else if (tags.includes('strategy') || tags.includes('tactical') || tags.includes('turn-based')) newVibe = 'Strategic';
+            else if (tags.includes('role-playing') || tags.includes('rpg') || tags.includes('point-and-click') || tags.includes('visual novel')) newVibe = 'Narrative';
+            else if (tags.includes('platform') || tags.includes('arcade') || tags.includes('racing')) newVibe = 'Brain-Off';
+            else if (tags.includes('shooter') || tags.includes('hack and slash') || tags.includes('action')) newVibe = 'Intense';
+
+            // Recalculate isPauseable for existing games
+            const name = (game.title || '').toLowerCase();
+            const modes = (game.gameModes || '').toLowerCase();
+            const unpauseableFranchises = ['dark souls', 'bloodborne', 'elden ring', 'sekiro', "demon's souls", 'nioh', 'lies of p'];
+            let isPauseable = true;
+            
+            if (unpauseableFranchises.some(f => name.includes(f))) {
+              isPauseable = false;
+            } else if (modes.includes('massively multiplayer online') || 
+                      (modes.includes('multiplayer') && !modes.includes('single player'))) {
+              isPauseable = false;
+            }
+
+            return { ...game, vibe: newVibe, isPauseable };
+          });
+          
+          await AsyncStorage.setItem('library_migration_v3', 'true');
+        }
+
+        setLibrary(parsedLibrary);
+      } catch (e) {
+        console.error('Error loading local library:', e);
+      } finally {
+        setIsLoaded(true);
       }
-    }
+    };
+
+    loadLibrary();
   }, []);
+
+  // Save library to local AsyncStorage with 300ms debounce to batch rapid swipes
+  useEffect(() => {
+    if (!isLoaded) return;
+    const timeoutId = setTimeout(async () => {
+      try {
+        await AsyncStorage.setItem('oracle_library', JSON.stringify(library));
+      } catch (e) {
+        console.error('Error saving local library:', e);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [library, isLoaded]);
 
   const handleSaveToLibrary = (game) => {
     setLibrary((prev) => {
@@ -152,10 +164,10 @@ export default function App() {
           })}
         >
           <Tab.Screen name="Stack">
-            {(props) => <StackScreen {...props} library={library} onSaveToLibrary={handleSaveToLibrary} onRemoveFromLibrary={handleRemoveFromLibrary} />}
+            {(props) => <StackScreen {...props} library={library} isLoaded={isLoaded} onSaveToLibrary={handleSaveToLibrary} onRemoveFromLibrary={handleRemoveFromLibrary} />}
           </Tab.Screen>
           <Tab.Screen name="Oracle">
-            {(props) => <OracleScreen {...props} library={library} />}
+            {(props) => <OracleScreen {...props} library={library} onSaveToLibrary={handleSaveToLibrary} />}
           </Tab.Screen>
           <Tab.Screen name="Library">
             {(props) => (

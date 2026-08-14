@@ -5,17 +5,19 @@ import { styles } from '../styles/theme';
 import { VIBES } from '../utils/constants';
 import { FlippableCard } from '../components/FlippableCard';
 
-export const OracleScreen = ({ library }) => {
+export const OracleScreen = ({ library, onSaveToLibrary }) => {
   const [selectedVibe, setSelectedVibe] = useState(null);
   const [source, setSource] = useState('backlog');
   const [recommendation, setRecommendation] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [isSpinning, setIsSpinning] = useState(false);
   const [rouletteGame, setRouletteGame] = useState(null);
+  const [isStarted, setIsStarted] = useState(false);
 
   const handleConsultOracle = () => {
     setErrorMsg('');
     setRecommendation(null);
+    setIsStarted(false);
 
     const candidates = library.filter(
       game => game.status === source && (!selectedVibe || game.vibe === selectedVibe)
@@ -54,6 +56,16 @@ export const OracleScreen = ({ library }) => {
     spin();
   };
 
+  const handleStartPlaying = () => {
+    if (!recommendation || !onSaveToLibrary) return;
+    onSaveToLibrary({
+      ...recommendation,
+      status: 'playing',
+      loggedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    });
+    setIsStarted(true);
+  };
+
   if (isSpinning || recommendation) {
     const displayGame = isSpinning ? rouletteGame : recommendation;
     return (
@@ -70,10 +82,30 @@ export const OracleScreen = ({ library }) => {
           )}
           
           {!isSpinning && (
-            <View style={{ position: 'absolute', bottom: 10, left: 20, right: 20 }}>
+            <View style={{ position: 'absolute', bottom: 10, left: 20, right: 20, gap: 10 }}>
+              {source === 'backlog' && (
+                isStarted ? (
+                  <View style={[styles.oracleButton, { backgroundColor: '#ff9f0a', borderColor: '#ff9f0a' }]}>
+                    <Ionicons name="checkmark-circle" size={20} color="#000" style={{ marginRight: 8 }} />
+                    <Text style={[styles.oracleButtonText, { color: '#000' }]}>Moved to Now Playing!</Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity 
+                    style={[styles.oracleButton, { backgroundColor: '#fff', borderColor: '#fff' }]} 
+                    onPress={handleStartPlaying}
+                  >
+                    <Ionicons name="play-circle" size={20} color="#000" style={{ marginRight: 8 }} />
+                    <Text style={[styles.oracleButtonText, { color: '#000' }]}>Start Playing Now</Text>
+                  </TouchableOpacity>
+                )
+              )}
+
               <TouchableOpacity 
                 style={styles.oracleButton} 
-                onPress={() => setRecommendation(null)}
+                onPress={() => {
+                  setRecommendation(null);
+                  setIsStarted(false);
+                }}
               >
                 <Ionicons name="refresh-outline" size={20} color="#fff" style={{ marginRight: 10 }} />
                 <Text style={styles.oracleButtonText}>Ask Again</Text>

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { View, Text, SafeAreaView, FlatList, TouchableOpacity, Modal, ScrollView, Image, TextInput, Alert, ActivityIndicator, LayoutAnimation, Platform, UIManager, Animated } from 'react-native';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -6,8 +6,26 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 import { Ionicons } from '@expo/vector-icons';
 import { styles } from '../styles/theme';
+import ReaderModal from '../components/ReaderModal';
+import MapViewerModal from '../components/MapViewerModal';
+import AddGameProfileModal from '../components/AddGameProfileModal';
+import EditGameProfileModal from '../components/EditGameProfileModal';
+import { UpdateJournalModal } from '../components/UpdateJournalModal';
 import { ScreenshotGallery } from '../components/ScreenshotGallery';
-import { searchGamesFromIGDB } from '../api/igdb';
+import { processGameProfileAsset } from '../utils/vaultStorage';
+
+const CONSOLE_FILTERS = [
+  'ALL',
+  'NES', 'SNES', 'N64', 'GameCube', 'Wii', 'Wii U', 'Switch',
+  'Game Boy', 'Game Boy Color', 'Game Boy Advance', 'Nintendo DS', 'Nintendo 3DS',
+  'PS1', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'PS Vita',
+  'Xbox', 'Xbox 360', 'Xbox One', 'Xbox Series X/S',
+  'Sega Master System', 'Genesis', 'Sega CD', 'Sega Saturn', 'Dreamcast', 'Game Gear',
+  'Atari 2600', 'Atari 5200', 'Atari 7800', 'Atari Jaguar', 'Atari Lynx',
+  'Neo Geo', 'Neo Geo Pocket', 'TurboGrafx-16', '3DO', 'CD-i', 'Intellivision', 'ColecoVision',
+  'Amiga', 'Commodore 64', 'ZX Spectrum', 'MSX',
+  'Arcade', 'PC', 'Mac', 'Linux', 'Mobile', 'Other'
+];
 
 export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary }) => {
   const [selectedGame, setSelectedGame] = useState(null);
@@ -15,18 +33,15 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
   const [searchQuery, setSearchQuery] = useState('');
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [sortOption, setSortOption] = useState('recent');
-  const [showSort, setShowSort] = useState(false);
-  const sortAnim = useRef(new Animated.Value(0)).current;
+  const [selectedSystemFilter, setSelectedSystemFilter] = useState('ALL');
+  const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
+  const [isPassportSystemModalVisible, setIsPassportSystemModalVisible] = useState(false);
+  const [isJournalModalVisible, setIsJournalModalVisible] = useState(false);
+  const [activeManual, setActiveManual] = useState(null);
+  const [activeMap, setActiveMap] = useState(null);
+  const [isCustomAddVisible, setIsCustomAddVisible] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(null);
   const listOpacity = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    Animated.spring(sortAnim, {
-      toValue: showSort ? 1 : 0,
-      friction: 8,
-      tension: 60,
-      useNativeDriver: false,
-    }).start();
-  }, [showSort]);
 
   // Add Game Modal States
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
@@ -34,15 +49,32 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
   const [addSearchResults, setAddSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  // Collection Stats (Owned = Played + Backlog)
-  const playedCount = library.filter(g => g.status === 'played').length;
-  const backlogCount = library.filter(g => g.status === 'backlog').length;
-  const wishlistCount = library.filter(g => g.status === 'wishlist').length;
-  const allCount = library.filter(g => g.status !== 'passed').length;
-  const totalOwnedCount = playedCount + backlogCount;
+  // Single-pass Collection Stats (Owned = Playing + Backlog + Played)
+  const { playingCount, backlogCount, wishlistCount, playedCount, allCount, totalOwnedCount } = useMemo(() => {
+    let playing = 0;
+    let backlog = 0;
+    let wishlist = 0;
+    let played = 0;
+    for (let i = 0; i < library.length; i++) {
+      const status = library[i].status;
+      if (status === 'playing') playing++;
+      else if (status === 'backlog') backlog++;
+      else if (status === 'wishlist') wishlist++;
+      else if (status === 'played') played++;
+    }
+    return {
+      playingCount: playing,
+      backlogCount: backlog,
+      wishlistCount: wishlist,
+      playedCount: played,
+      allCount: playing + backlog + wishlist + played,
+      totalOwnedCount: playing + backlog + played,
+    };
+  }, [library]);
 
   const tabs = [
     { id: 'all', label: 'All', count: allCount },
+    { id: 'playing', label: 'Playing', count: playingCount },
     { id: 'backlog', label: 'Backlog', count: backlogCount },
     { id: 'wishlist', label: 'Wishlist', count: wishlistCount },
     { id: 'played', label: 'Played', count: playedCount },
@@ -62,46 +94,60 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
 
   const handleAddGame = (game, status) => {
     onSaveToLibrary({ ...game, status });
+    setSearchQuery('');
+    setActiveTab(status === 'passed' ? 'all' : status);
   };
 
   const getBadgeStyle = (status) => {
+    if (status === 'playing') return { color: '#ff9f0a', borderColor: '#ff9f0a', label: 'NOW PLAYING' };
     if (status === 'played') return { color: '#32d74b', borderColor: '#32d74b', label: 'PLAYED' };
     if (status === 'backlog') return { color: '#0a84ff', borderColor: '#0a84ff', label: 'BACKLOG' };
     if (status === 'wishlist') return { color: '#fff', borderColor: '#fff', label: 'WISHLIST' };
     return { color: '#888', borderColor: '#888', label: status };
   };
 
-  let visibleLibrary = library.filter(g => {
-    if (g.status === 'passed') return false;
-    
-    // Tab filtering
-    if (activeTab !== 'all' && g.status !== activeTab) return false;
-    
-    // Search filtering
-    if (searchQuery.trim() !== '') {
-      const q = searchQuery.toLowerCase();
-      const titleMatch = g.title && g.title.toLowerCase().includes(q);
-      const devMatch = g.developer && g.developer.toLowerCase().includes(q);
-      if (!titleMatch && !devMatch) return false;
-    }
-    
-    return true;
-  });
+  const visibleLibrary = useMemo(() => {
+    let filtered = library.filter(g => {
+      if (g.status === 'passed') return false;
+      
+      // Tab filtering
+      if (activeTab !== 'all' && g.status !== activeTab) return false;
 
-  if (sortOption === 'title') {
-    visibleLibrary.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
-  } else if (sortOption === 'rating') {
-    visibleLibrary.sort((a, b) => (b.ratingScore || 0) - (a.ratingScore || 0));
-  } else if (sortOption === 'year') {
-    visibleLibrary.sort((a, b) => (b.releaseYear || 0) - (a.releaseYear || 0));
-  }
+      // Console System filtering
+      if (selectedSystemFilter !== 'ALL') {
+        const sys = (g.system || g.developer || '').toUpperCase();
+        if (!sys.includes(selectedSystemFilter.toUpperCase())) return false;
+      }
+      
+      // Search filtering
+      if (searchQuery.trim() !== '') {
+        const q = searchQuery.toLowerCase();
+        const titleMatch = g.title && g.title.toLowerCase().includes(q);
+        const devMatch = g.developer && g.developer.toLowerCase().includes(q);
+        if (!titleMatch && !devMatch) return false;
+      }
+      
+      return true;
+    });
+
+    if (sortOption === 'title') {
+      return [...filtered].sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+    } else if (sortOption === 'rating') {
+      return [...filtered].sort((a, b) => (b.ratingScore || 0) - (a.ratingScore || 0));
+    } else if (sortOption === 'year') {
+      return [...filtered].sort((a, b) => (b.releaseYear || 0) - (a.releaseYear || 0));
+    }
+
+    return filtered;
+  }, [library, activeTab, searchQuery, sortOption, selectedSystemFilter]);
 
   const renderItem = ({ item }) => {
     const badge = getBadgeStyle(item.status);
+    const coverUri = (item.coverUrl || item.coverUri || '').trim();
     return (
       <TouchableOpacity style={styles.timelineItem} onPress={() => setSelectedGame(item)}>
-        {item.coverUrl ? (
-          <Image source={{ uri: item.coverUrl }} style={styles.timelineImage} />
+        {coverUri.length > 0 ? (
+          <Image source={{ uri: coverUri }} style={styles.timelineImage} />
         ) : (
           <View style={styles.timelineImagePlaceholder}>
             <Ionicons name="game-controller-outline" size={24} color="#555" />
@@ -128,7 +174,11 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
     let title = 'Library Empty';
     let sub = 'Swipe games on The Stack to build your timeline.';
 
-    if (activeTab === 'backlog') {
+    if (activeTab === 'playing') {
+      icon = 'play-circle-outline';
+      title = 'No Games In Progress';
+      sub = 'Mark games as Now Playing to track what you\'re active on this week.';
+    } else if (activeTab === 'backlog') {
       icon = 'layers-outline';
       title = 'Backlog Clear';
       sub = 'You have no games in your backlog. Time to hit The Stack!';
@@ -139,7 +189,7 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
     } else if (activeTab === 'played') {
       icon = 'game-controller-outline';
       title = 'No Games Played';
-      sub = 'Swipe RIGHT on The Stack to log games you\'ve beaten.';
+      sub = 'Swipe RIGHT on The Stack or mark games as Played once you\'ve played them.';
     }
 
     return (
@@ -166,13 +216,13 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
           <Ionicons name="library-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
           <Text style={styles.collectionStatTitle}>Collection Total:</Text>
           <Text style={styles.collectionStatCount}>{totalOwnedCount} {totalOwnedCount === 1 ? 'Game' : 'Games'} Owned</Text>
-          <Text style={styles.collectionStatBreakdown}>({playedCount} Played • {backlogCount} Backlog)</Text>
+          <Text style={styles.collectionStatBreakdown}>({playingCount} Playing • {backlogCount} Backlog • {playedCount} Played)</Text>
         </View>
       </View>
 
-      {/* Search Bar & Sort Toggle */}
+      {/* Search Bar & Filter Toggle */}
       <View style={{ flexDirection: 'row', paddingHorizontal: 15, marginTop: 15, alignItems: 'center' }}>
-        <View style={[styles.searchBarContainer, { flex: 1, marginTop: 0, marginHorizontal: 0 }]}>
+        <View style={[styles.searchBarContainer, { flex: 1, marginTop: 0, marginHorizontal: 0, marginBottom: 0 }]}>
           <Ionicons name="search" size={20} color="#888" />
           <TextInput
             style={styles.searchBarInput}
@@ -184,57 +234,22 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
           />
         </View>
         <TouchableOpacity 
-          style={{ marginLeft: 10, padding: 10, backgroundColor: '#0a0a0a', borderRadius: 8, borderWidth: 0.5, borderColor: showSort ? '#fff' : '#333' }}
-          onPress={() => setShowSort(!showSort)}
+          style={{ marginLeft: 10, padding: 10, backgroundColor: '#0a0a0a', borderRadius: 8, borderWidth: 0.5, borderColor: '#333' }}
+          onPress={() => setIsFilterModalVisible(true)}
         >
-          <Ionicons name="filter" size={20} color={showSort ? '#fff' : '#888'} />
+          <Ionicons name="filter" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
 
-      {/* Sort Options Row */}
-      <Animated.View style={{ 
-        height: sortAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 60] }), 
-        opacity: sortAnim,
-        overflow: 'hidden' 
-      }}>
-        <View style={{ height: 45, marginTop: 10, marginBottom: 5 }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingHorizontal: 15 }} contentContainerStyle={{ paddingRight: 30, alignItems: 'center' }}>
-            {[
-            { id: 'recent', label: 'Recently Added' },
-            { id: 'title', label: 'A-Z' },
-            { id: 'rating', label: 'Top Rated' },
-            { id: 'year', label: 'Newest Release' }
-          ].map(opt => (
-            <TouchableOpacity 
-              key={opt.id}
-              style={[styles.libraryTab, { marginRight: 10 }, sortOption === opt.id && styles.libraryTabActive]}
-              onPress={() => {
-                if (sortOption === opt.id) return;
-                Animated.timing(listOpacity, {
-                  toValue: 0,
-                  duration: 150,
-                  useNativeDriver: true
-                }).start(() => {
-                  setSortOption(opt.id);
-                  Animated.timing(listOpacity, { toValue: 1, duration: 150, useNativeDriver: true }).start();
-                });
-              }}
-            >
-              <Text style={[styles.libraryTabText, sortOption === opt.id && styles.libraryTabTextActive]}>{opt.label}</Text>
-            </TouchableOpacity>
-          ))}
-          </ScrollView>
-        </View>
-      </Animated.View>
-
-      {/* Segmented Control */}
-      <View style={styles.libraryTabsRow}>
+      {/* Segmented Control / Disposition Tabs */}
+      <View style={[styles.libraryTabsRow, { marginTop: 15, flexWrap: 'wrap' }]}>
         {tabs.map(tab => (
           <TouchableOpacity
             key={tab.id}
             style={[styles.libraryTab, activeTab === tab.id && styles.libraryTabActive]}
             onPress={() => {
               if (activeTab === tab.id) return;
+              setSearchQuery('');
               Animated.timing(listOpacity, {
                 toValue: 0,
                 duration: 150,
@@ -276,51 +291,135 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
             {selectedGame && (
               <>
                 <View style={styles.passportHeader}>
-                  <Text style={styles.passportTitle}>{selectedGame.title}</Text>
-                  <TouchableOpacity onPress={() => setSelectedGame(null)}>
+                  <Text style={styles.passportTitle}>{selectedGame.title || selectedGame.name || 'Untitled Game'}</Text>
+                  <TouchableOpacity onPress={() => {
+                    if (selectedGame) onSaveToLibrary(selectedGame);
+                    setSelectedGame(null);
+                  }}>
                     <Ionicons name="close-circle" size={32} color="#555" />
                   </TouchableOpacity>
                 </View>
-                <Text style={styles.passportDev}>{selectedGame.developer}</Text>
+                <Text style={styles.passportDev}>{selectedGame.developer || selectedGame.system || 'Unknown Developer'}</Text>
                 
                 <ScrollView showsVerticalScrollIndicator={false}>
-                  <Text style={styles.passportDesc}>{selectedGame.description}</Text>
+                  <Text style={styles.passportDesc}>{selectedGame.description || selectedGame.summary || 'No overview available for this game profile.'}</Text>
 
-                {(selectedGame.screenshots?.length > 0 || selectedGame.coverUrl) && (
-                  <View style={{ marginBottom: 15, marginTop: 10 }}>
-                    <Text style={styles.specsHeader}>SCREENSHOTS</Text>
-                    <ScreenshotGallery screenshots={selectedGame.screenshots?.length > 0 ? selectedGame.screenshots : [selectedGame.coverUrl]} />
-                  </View>
-                )}
+                {(() => {
+                  const coverUri = (selectedGame.coverUrl || selectedGame.coverUri || '').trim();
+                  const validScreenshots = (selectedGame.screenshots || []).filter(s => typeof s === 'string' && s.trim().length > 0);
+                  const galleryImages = validScreenshots.length > 0 ? validScreenshots : (coverUri ? [coverUri] : []);
+                  if (galleryImages.length === 0) return null;
+                  return (
+                    <View style={{ marginBottom: 15, marginTop: 10 }}>
+                      <Text style={styles.specsHeader}>SCREENSHOTS</Text>
+                      <ScreenshotGallery screenshots={galleryImages} />
+                    </View>
+                  );
+                })()}
 
                 <View style={styles.divider} />
 
                 <Text style={styles.specsHeader}>PLAYER RESPECT SPECS</Text>
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Category</Text>
-                  <Text style={styles.detailValue}>{selectedGame.vibe}</Text>
+                  <Text style={styles.detailValue}>{selectedGame.vibe || 'Classic Retro'}</Text>
                 </View>
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Est. Session</Text>
-                  <Text style={styles.detailValue}>{selectedGame.time}</Text>
+                  <Text style={styles.detailValue}>{selectedGame.time || '30-45 mins'}</Text>
                 </View>
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Pause Anytime</Text>
-                  <Text style={[styles.detailValue, { color: selectedGame.isPauseable ? '#32d74b' : '#ff453a' }]}>
-                    {selectedGame.isPauseable ? 'Yes' : 'No'}
+                  <Text style={[styles.detailValue, { color: selectedGame.isPauseable !== false ? '#32d74b' : '#ff453a' }]}>
+                    {selectedGame.isPauseable !== false ? 'Yes' : 'No'}
                   </Text>
                 </View>
 
-                {/* Trojan Horse Phase Placeholder */}
-                <View style={styles.trojanBox}>
-                  <Ionicons name="document-text-outline" size={20} color="#666" />
-                  <Text style={styles.trojanText}>Session Notes & Vault Documents (Trojan Horse Phase)</Text>
+                {/* Session Notes & Vault Journal Suite */}
+                <View style={{ marginTop: 20 }}>
+                  <Text style={styles.specsHeader}>SESSION NOTES & VAULT JOURNAL</Text>
+                  
+                  {/* Console System Selector (Passport) */}
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      backgroundColor: '#0a0a0a',
+                      borderWidth: 0.5,
+                      borderColor: '#333',
+                      paddingHorizontal: 16,
+                      paddingVertical: 12,
+                      borderRadius: 8,
+                      marginVertical: 12
+                    }}
+                    onPress={() => setIsPassportSystemModalVisible(true)}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Ionicons name="game-controller-outline" size={18} color="#888" style={{ marginRight: 8 }} />
+                      <Text style={{ color: '#fff', fontSize: 14, fontWeight: '500' }}>
+                        {selectedGame.system || 'Unknown'}
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-down" size={18} color="#888" />
+                  </TouchableOpacity>
+
+                  {/* Update Journal Button */}
+                  <TouchableOpacity 
+                    style={{ backgroundColor: '#111', borderWidth: 0.5, borderColor: '#fff', paddingVertical: 14, borderRadius: 12, alignItems: 'center', marginBottom: 15 }}
+                    onPress={() => setIsJournalModalVisible(true)}
+                  >
+                    <Text style={{ color: '#fff', fontSize: 15, fontWeight: 'bold' }}>Update Journal Entry</Text>
+                  </TouchableOpacity>
+
+                  {/* Vault Document Launchers */}
+                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
+                    {selectedGame.manual && (
+                      <TouchableOpacity 
+                        style={{ flex: 1, backgroundColor: '#111', borderWidth: 0.5, borderColor: '#fff', paddingVertical: 10, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}
+                        onPress={() => setActiveManual(selectedGame.manual)}
+                      >
+                        <Ionicons name="book-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
+                        <Text style={{ color: '#fff', fontSize: 13, fontWeight: '500' }}>Read Manual</Text>
+                      </TouchableOpacity>
+                    )}
+
+                    {selectedGame.map && (
+                      <TouchableOpacity 
+                        style={{ flex: 1, backgroundColor: '#111', borderWidth: 0.5, borderColor: '#fff', paddingVertical: 10, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}
+                        onPress={() => setActiveMap(selectedGame.map)}
+                      >
+                        <Ionicons name="map-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
+                        <Text style={{ color: '#fff', fontSize: 13, fontWeight: '500' }}>View Map</Text>
+                      </TouchableOpacity>
+                    )}
+
+                    <TouchableOpacity 
+                      style={{ backgroundColor: '#111', borderWidth: 0.5, borderColor: '#444', paddingVertical: 10, paddingHorizontal: 14, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}
+                      onPress={() => setEditingProfile(selectedGame)}
+                    >
+                      <Ionicons name="create-outline" size={16} color="#aaa" style={{ marginRight: 4 }} />
+                      <Text style={{ color: '#aaa', fontSize: 13, fontWeight: '500' }}>Edit Profile</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
                 {/* Edit Controls */}
                 <View style={styles.editStatusContainer}>
                   <Text style={styles.specsHeader}>EDIT STATUS</Text>
                   <View style={styles.editStatusRow}>
+                    <TouchableOpacity 
+                      style={[styles.editStatusButton, selectedGame.status === 'playing' && styles.editStatusButtonActive]}
+                      onPress={() => {
+                        const updatedGame = { ...selectedGame, status: 'playing' };
+                        setSelectedGame(updatedGame);
+                        onSaveToLibrary(updatedGame);
+                      }}
+                    >
+                      <Ionicons name="play-circle-outline" size={20} color={selectedGame.status === 'playing' ? '#000' : '#888'} />
+                      <Text style={[styles.editStatusButtonText, selectedGame.status === 'playing' && styles.editStatusButtonTextActive]}>Now Playing</Text>
+                    </TouchableOpacity>
+
                     <TouchableOpacity 
                       style={[styles.editStatusButton, selectedGame.status === 'backlog' && styles.editStatusButtonActive]}
                       onPress={() => {
@@ -354,7 +453,7 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
                       }}
                     >
                       <Ionicons name="game-controller-outline" size={20} color={selectedGame.status === 'played' ? '#000' : '#888'} />
-                      <Text style={[styles.editStatusButtonText, selectedGame.status === 'played' && styles.editStatusButtonTextActive]}>Playing/Played</Text>
+                      <Text style={[styles.editStatusButtonText, selectedGame.status === 'played' && styles.editStatusButtonTextActive]}>Played</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -406,6 +505,117 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
         </View>
       </Modal>
 
+      {/* Passport System Selection Modal */}
+      <Modal visible={isPassportSystemModalVisible} transparent={true} animationType="fade">
+        <TouchableOpacity 
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center' }} 
+          activeOpacity={1} 
+          onPress={() => setIsPassportSystemModalVisible(false)}
+        >
+          <View style={{ width: '85%', maxHeight: '75%', backgroundColor: '#111', borderRadius: 12, borderWidth: 0.5, borderColor: '#333', overflow: 'hidden' }}>
+            <View style={{ padding: 15, borderBottomWidth: 0.5, borderBottomColor: '#222', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>Select Console System</Text>
+              <TouchableOpacity onPress={() => setIsPassportSystemModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#888" />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={CONSOLE_FILTERS.slice(1)}
+              keyExtractor={item => item}
+              showsVerticalScrollIndicator={true}
+              renderItem={({ item }) => {
+                const isActive = selectedGame?.system === item;
+                return (
+                  <TouchableOpacity
+                    style={{ padding: 15, borderBottomWidth: 0.5, borderBottomColor: '#222', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: isActive ? '#1a1a1a' : '#111' }}
+                    onPress={() => {
+                      if (selectedGame) {
+                        const updated = { ...selectedGame, system: item };
+                        setSelectedGame(updated);
+                        onSaveToLibrary(updated);
+                      }
+                      setIsPassportSystemModalVisible(false);
+                    }}
+                  >
+                    <Text style={{ color: isActive ? '#fff' : '#ccc', fontSize: 15, fontWeight: isActive ? 'bold' : 'normal' }}>{item}</Text>
+                    {isActive && <Ionicons name="checkmark" size={20} color="#fff" />}
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Filter & Sort Selection Modal */}
+      <Modal visible={isFilterModalVisible} transparent={true} animationType="fade">
+        <TouchableOpacity 
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end', alignItems: 'center' }} 
+          activeOpacity={1} 
+          onPress={() => setIsFilterModalVisible(false)}
+        >
+          <View style={{ width: '100%', maxHeight: '85%', backgroundColor: '#111', borderTopLeftRadius: 16, borderTopRightRadius: 16, borderWidth: 0.5, borderColor: '#333', overflow: 'hidden' }}>
+            <View style={{ padding: 15, borderBottomWidth: 0.5, borderBottomColor: '#222', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>Filter & Sort</Text>
+              <TouchableOpacity onPress={() => setIsFilterModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#888" />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Sort By Section */}
+              <View style={{ padding: 15, borderBottomWidth: 0.5, borderBottomColor: '#222' }}>
+                <Text style={{ color: '#888', fontSize: 12, fontWeight: 'bold', marginBottom: 10 }}>SORT BY</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+                  {[
+                    { id: 'recent', label: 'Recently Added' },
+                    { id: 'title', label: 'A-Z' },
+                    { id: 'rating', label: 'Top Rated' },
+                    { id: 'year', label: 'Newest Release' }
+                  ].map(opt => (
+                    <TouchableOpacity
+                      key={opt.id}
+                      style={{
+                        paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20,
+                        backgroundColor: sortOption === opt.id ? '#fff' : '#1a1a1a',
+                        borderWidth: 0.5, borderColor: sortOption === opt.id ? '#fff' : '#333'
+                      }}
+                      onPress={() => {
+                        setSortOption(opt.id);
+                        setIsFilterModalVisible(false);
+                      }}
+                    >
+                      <Text style={{ color: sortOption === opt.id ? '#000' : '#888', fontSize: 13, fontWeight: '600' }}>{opt.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* System Filter Section */}
+              <View style={{ padding: 15 }}>
+                <Text style={{ color: '#888', fontSize: 12, fontWeight: 'bold', marginBottom: 10 }}>FILTER BY SYSTEM</Text>
+                {CONSOLE_FILTERS.map((item) => {
+                  const isActive = selectedSystemFilter === item;
+                  return (
+                    <TouchableOpacity
+                      key={item}
+                      style={{ paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: '#222', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: isActive ? '#1a1a1a' : 'transparent', paddingHorizontal: isActive ? 10 : 0, borderRadius: isActive ? 6 : 0, marginVertical: 2 }}
+                      onPress={() => {
+                        setSelectedSystemFilter(item);
+                        setIsFilterModalVisible(false);
+                      }}
+                    >
+                      <Text style={{ color: isActive ? '#fff' : '#ccc', fontSize: 15, fontWeight: isActive ? 'bold' : 'normal' }}>{item}</Text>
+                      {isActive && <Ionicons name="checkmark" size={20} color="#fff" />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
       {/* Add Game Modal */}
       <Modal visible={isAddModalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
@@ -436,6 +646,17 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
                 <Ionicons name="search" size={20} color="#fff" />
               </TouchableOpacity>
             </View>
+
+            <TouchableOpacity 
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#111', borderWidth: 0.5, borderColor: '#444', padding: 10, borderRadius: 8, marginVertical: 10 }}
+              onPress={() => {
+                setIsAddModalVisible(false);
+                setIsCustomAddVisible(true);
+              }}
+            >
+              <Ionicons name="add-circle-outline" size={18} color="#fff" style={{ marginRight: 6 }} />
+              <Text style={{ color: '#fff', fontSize: 13, fontWeight: '500' }}>Create Custom Profile (Manuals & Maps)</Text>
+            </TouchableOpacity>
 
             {isSearching ? (
               <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -485,6 +706,51 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary })
           </View>
         </View>
       </Modal>
+
+      {/* Retro Vault Document Modals */}
+      <ReaderModal
+        visible={!!activeManual}
+        manual={activeManual}
+        onClose={() => setActiveManual(null)}
+      />
+
+      <MapViewerModal
+        visible={!!activeMap}
+        map={activeMap}
+        title={selectedGame ? selectedGame.title : ''}
+        onClose={() => setActiveMap(null)}
+      />
+
+      <UpdateJournalModal 
+        visible={isJournalModalVisible}
+        game={selectedGame}
+        onClose={() => setIsJournalModalVisible(false)}
+        onSave={(updated) => {
+          setSelectedGame(updated);
+          onSaveToLibrary(updated);
+        }}
+      />
+
+      <AddGameProfileModal
+        visible={isCustomAddVisible}
+        onClose={() => setIsCustomAddVisible(false)}
+        onSave={async (profileData) => {
+          const gameProfile = await processGameProfileAsset(profileData);
+          onSaveToLibrary(gameProfile);
+          setActiveTab('backlog');
+        }}
+      />
+
+      <EditGameProfileModal
+        visible={!!editingProfile}
+        profile={editingProfile}
+        onClose={() => setEditingProfile(null)}
+        onSave={async (id, updateData) => {
+          const updatedProfile = await processGameProfileAsset({ id, ...updateData, existingProfile: editingProfile });
+          setSelectedGame(updatedProfile);
+          onSaveToLibrary(updatedProfile);
+        }}
+      />
 
     </SafeAreaView>
   );

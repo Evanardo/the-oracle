@@ -1,6 +1,8 @@
+require('dotenv').config();
 const https = require('https');
-const IGDB_CLIENT_ID = 'f1pxzxrb2e1elgcf9t129qyb2ruzt3';
-const IGDB_ACCESS_TOKEN = 'kkzfrkani8ulbb2qbycrca5tam4kub';
+
+const IGDB_CLIENT_ID = process.env.IGDB_CLIENT_ID;
+const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN;
 
 // Generate 150 random IDs
 const ids = Array.from({length: 150}, (_, i) => i + 1000);

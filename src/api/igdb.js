@@ -135,7 +135,11 @@ const mapIGDBToAppFormat = (igdbGame) => {
   };
 };
 
-export const fetchGamesFromIGDB = async (filterMode, library) => {
+const getProxyEndpoints = () => {
+  if (process.env.EXPO_PUBLIC_PROXY_URL) {
+    return [process.env.EXPO_PUBLIC_PROXY_URL];
+  }
+
   let currentHost = 'localhost';
   if (typeof window !== 'undefined' && window.location?.hostname) {
     currentHost = window.location.hostname;
@@ -143,10 +147,14 @@ export const fetchGamesFromIGDB = async (filterMode, library) => {
     currentHost = Constants.expoConfig.hostUri.split(':')[0];
   }
 
-  const endpoints = [
+  return Array.from(new Set([
     `http://${currentHost}:3001`,
     'http://localhost:3001'
-  ];
+  ]));
+};
+
+export const fetchGamesFromIGDB = async (filterMode, library) => {
+  const endpoints = getProxyEndpoints();
 
   const savedIds = (library || [])
     .map(g => g.id)
@@ -195,17 +203,7 @@ export const fetchGamesFromIGDB = async (filterMode, library) => {
 };
 
 export const searchGamesFromIGDB = async (query) => {
-  let currentHost = 'localhost';
-  if (typeof window !== 'undefined' && window.location?.hostname) {
-    currentHost = window.location.hostname;
-  } else if (Constants.expoConfig?.hostUri) {
-    currentHost = Constants.expoConfig.hostUri.split(':')[0];
-  }
-
-  const endpoints = [
-    `http://${currentHost}:3001`,
-    'http://localhost:3001'
-  ];
+  const endpoints = getProxyEndpoints();
 
   const safeQuery = query.replace(/"/g, '');
   const bodyQuery = `search "${safeQuery}"; fields name, summary, rating, rating_count, first_release_date, cover.image_id, screenshots.image_id, genres.name, platforms.name, game_modes.name, themes.name, player_perspectives.name, involved_companies.company.name, involved_companies.developer, similar_games.name; where cover != null; limit 20;`;

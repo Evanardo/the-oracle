@@ -6,7 +6,7 @@ import { FlippableCard } from '../components/FlippableCard';
 import { styles } from '../styles/theme';
 import { SCREEN_WIDTH, SCREEN_HEIGHT, SWIPE_THRESHOLD, SWIPE_OUT_DURATION } from '../utils/constants';
 
-export const StackScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary }) => {
+export const StackScreen = ({ library, isLoaded = true, onSaveToLibrary, onRemoveFromLibrary }) => {
   const [gamesStack, setGamesStack] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -27,8 +27,10 @@ export const StackScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary }) =
   }, [currentIndex]);
 
   useEffect(() => {
-    loadGames();
-  }, [deckFilter]);
+    if (isLoaded) {
+      loadGames();
+    }
+  }, [deckFilter, isLoaded]);
 
   const loadGames = async () => {
     setLoading(true);
@@ -158,7 +160,7 @@ export const StackScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary }) =
   });
 
   const renderCards = () => {
-    if (loading) {
+    if (!isLoaded || loading) {
       return (
         <View style={styles.emptyState}>
           <ActivityIndicator size="large" color="#fff" />
@@ -192,9 +194,8 @@ export const StackScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary }) =
       );
     }
 
-    return gamesStack.map((item, i) => {
-      if (i < currentIndex) return null;
-      const isTopCard = i === currentIndex;
+    return gamesStack.slice(currentIndex, currentIndex + 3).map((item, relIndex) => {
+      const isTopCard = relIndex === 0;
       return (
         <FlippableCard
           key={item.id}
@@ -207,7 +208,7 @@ export const StackScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary }) =
           opacityLeft={opacityLeft}
           opacityUp={opacityUp}
           opacityDown={opacityDown}
-          stackDepth={i - currentIndex}
+          stackDepth={relIndex}
         />
       );
     }).reverse();
@@ -223,7 +224,7 @@ export const StackScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary }) =
             onPress={() => setDeckFilter('popular')}
           >
             <Ionicons name="flame" size={13} color={deckFilter === 'popular' ? '#fff' : '#888'} style={{ marginRight: 5 }} />
-            <Text style={[styles.deckFilterText, deckFilter === 'popular' && styles.deckFilterTextActive]}>Top Blockbusters</Text>
+            <Text style={[styles.deckFilterText, deckFilter === 'popular' && styles.deckFilterTextActive]}>Headliners</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.deckFilterChip, deckFilter === 'discover' && styles.deckFilterChipActive]}
@@ -235,13 +236,44 @@ export const StackScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary }) =
         </View>
       </View>
       <View style={styles.cardContainer}>{renderCards()}</View>
-      {swipeHistory.length > 0 && (
-        <TouchableOpacity 
-          style={{ position: 'absolute', bottom: 30, right: 30, backgroundColor: '#111', padding: 12, borderRadius: 30, borderWidth: 0.5, borderColor: '#fff', elevation: 5, shadowColor: '#fff', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.2, shadowRadius: 10 }}
-          onPress={handleRewind}
-        >
-          <Ionicons name="play-back" size={24} color="#fff" />
-        </TouchableOpacity>
+      {!loading && !error && currentIndex < gamesStack.length && (
+        <View style={styles.stackActionBar}>
+          <TouchableOpacity 
+            style={[styles.stackActionButtonRewind, swipeHistory.length === 0 && { opacity: 0.25 }]} 
+            onPress={handleRewind}
+            disabled={swipeHistory.length === 0}
+          >
+            <Ionicons name="play-back" size={20} color={swipeHistory.length === 0 ? "#555" : "#fff"} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.stackActionButton, styles.stackActionButtonPass]} 
+            onPress={() => forceSwipe('left', -SCREEN_WIDTH, 0)}
+          >
+            <Ionicons name="close" size={22} color="#888" />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.stackActionButton, styles.stackActionButtonBacklog]} 
+            onPress={() => forceSwipe('down', 0, SCREEN_HEIGHT)}
+          >
+            <Ionicons name="layers-outline" size={18} color="#aaa" />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.stackActionButton, styles.stackActionButtonWishlist]} 
+            onPress={() => forceSwipe('up', 0, -SCREEN_HEIGHT)}
+          >
+            <Ionicons name="gift-outline" size={18} color="#ccc" />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.stackActionButton, styles.stackActionButtonPlayed]} 
+            onPress={() => forceSwipe('right', SCREEN_WIDTH, 0)}
+          >
+            <Ionicons name="checkmark" size={22} color="#fff" />
+          </TouchableOpacity>
+        </View>
       )}
     </SafeAreaView>
   );
