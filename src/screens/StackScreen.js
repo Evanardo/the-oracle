@@ -254,13 +254,15 @@ export const StackScreen = ({ library, isLoaded = true, onSaveToLibrary, onRemov
             disabled={swipeHistory.length === 0}
           >
             <Ionicons name="play-back" size={20} color={swipeHistory.length === 0 ? "#555" : "#fff"} />
+            <Text style={{ color: '#666', fontSize: 9, textTransform: 'uppercase', letterSpacing: 1, marginTop: 6, fontWeight: '500' }}>Undo</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
             style={[styles.stackActionButton, styles.stackActionButtonSkip]} 
             onPress={() => forceSwipe('skip', SCREEN_WIDTH, -SCREEN_HEIGHT)}
           >
-            <Ionicons name="play-skip-forward" size={18} color="#fff" />
+            <Ionicons name="play-skip-forward" size={20} color="#fff" />
+            <Text style={{ color: '#888', fontSize: 9, textTransform: 'uppercase', letterSpacing: 1, marginTop: 6, fontWeight: '500' }}>Skip</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -268,20 +270,23 @@ export const StackScreen = ({ library, isLoaded = true, onSaveToLibrary, onRemov
             onPress={() => forceSwipe('left', -SCREEN_WIDTH, 0)}
           >
             <Ionicons name="close" size={22} color="#888" />
+            <Text style={{ color: '#888', fontSize: 9, textTransform: 'uppercase', letterSpacing: 1, marginTop: 6, fontWeight: '500' }}>Pass</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
             style={[styles.stackActionButton, styles.stackActionButtonBacklog]} 
             onPress={() => forceSwipe('down', 0, SCREEN_HEIGHT)}
           >
-            <Ionicons name="layers-outline" size={18} color="#aaa" />
+            <Ionicons name="layers-outline" size={20} color="#aaa" />
+            <Text style={{ color: '#aaa', fontSize: 9, textTransform: 'uppercase', letterSpacing: 1, marginTop: 6, fontWeight: '500' }}>Backlog</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
             style={[styles.stackActionButton, styles.stackActionButtonWishlist]} 
             onPress={() => forceSwipe('up', 0, -SCREEN_HEIGHT)}
           >
-            <Ionicons name="gift-outline" size={18} color="#ccc" />
+            <Ionicons name="gift-outline" size={20} color="#ccc" />
+            <Text style={{ color: '#ccc', fontSize: 9, textTransform: 'uppercase', letterSpacing: 1, marginTop: 6, fontWeight: '500' }}>Wishlist</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -289,6 +294,7 @@ export const StackScreen = ({ library, isLoaded = true, onSaveToLibrary, onRemov
             onPress={() => forceSwipe('right', SCREEN_WIDTH, 0)}
           >
             <Ionicons name="checkmark" size={22} color="#fff" />
+            <Text style={{ color: '#fff', fontSize: 9, textTransform: 'uppercase', letterSpacing: 1, marginTop: 6, fontWeight: '500' }}>Played</Text>
           </TouchableOpacity>
         </View>
       )}

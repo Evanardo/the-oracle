@@ -77,7 +77,6 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary, o
 
   const tabs = [
     { id: 'all', label: 'All', count: allCount },
-    { id: 'playing', label: 'Playing', count: playingCount },
     { id: 'backlog', label: 'Backlog', count: backlogCount },
     { id: 'wishlist', label: 'Wishlist', count: wishlistCount },
     { id: 'played', label: 'Played', count: playedCount },
@@ -284,7 +283,7 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary, o
 
       {/* Segmented Control / Disposition Tabs */}
       <View style={[styles.libraryTabsRow, { marginTop: 15, flexWrap: 'wrap' }]}>
-        {tabs.map(tab => (
+        {tabs.filter(t => t.id !== 'playing').map(tab => (
           <TouchableOpacity
             key={tab.id}
             style={[styles.libraryTab, activeTab === tab.id && styles.libraryTabActive]}
@@ -302,10 +301,34 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary, o
             }}
           >
             <Text style={[styles.libraryTabText, activeTab === tab.id && styles.libraryTabTextActive]}>
-              {tab.label} ({tab.count})
+              {tab.label}
+              {tab.id !== 'all' && tab.count > 0 && ` (${tab.count})`}
             </Text>
           </TouchableOpacity>
         ))}
+
+        {/* Full-Width Now Playing Capsule */}
+        <TouchableOpacity
+          style={[styles.libraryTab, { width: '100%', marginTop: 2, alignItems: 'center', paddingVertical: 10, flexDirection: 'row', justifyContent: 'center' }, activeTab === 'playing' && styles.libraryTabActive]}
+          onPress={() => {
+            if (activeTab === 'playing') return;
+            setSearchQuery('');
+            Animated.timing(listOpacity, {
+              toValue: 0,
+              duration: 150,
+              useNativeDriver: true
+            }).start(() => {
+              setActiveTab('playing');
+              Animated.timing(listOpacity, { toValue: 1, duration: 150, useNativeDriver: true }).start();
+            });
+          }}
+        >
+          <Ionicons name="play-circle-outline" size={16} color={activeTab === 'playing' ? '#000' : '#888'} style={{ marginRight: 6 }} />
+          <Text style={[styles.libraryTabText, { fontSize: 13, letterSpacing: 1, textTransform: 'uppercase' }, activeTab === 'playing' && styles.libraryTabTextActive]}>
+            Now Playing
+            {playingCount > 0 && ` (${playingCount})`}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <Animated.View style={{ flex: 1, opacity: listOpacity }}>
