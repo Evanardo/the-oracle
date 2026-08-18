@@ -14,6 +14,7 @@ import { UpdateJournalModal } from '../components/UpdateJournalModal';
 import { ScreenshotGallery } from '../components/ScreenshotGallery';
 import { processGameProfileAsset } from '../utils/vaultStorage';
 import { searchGamesFromIGDB } from '../api/igdb';
+import { SwipeableLibraryItem } from '../components/SwipeableLibraryItem';
 
 const CONSOLE_FILTERS = [
   'ALL',
@@ -176,6 +177,11 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary, o
       return [...filtered].sort((a, b) => (b.ratingScore || 0) - (a.ratingScore || 0));
     } else if (sortOption === 'year') {
       return [...filtered].sort((a, b) => (b.releaseYear || 0) - (a.releaseYear || 0));
+    } else if (sortOption === 'priority') {
+      return [...filtered].sort((a, b) => {
+        if (a.priority === b.priority) return 0;
+        return a.priority ? -1 : 1;
+      });
     }
 
     return filtered;
@@ -185,27 +191,47 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary, o
     const badge = getBadgeStyle(item.status);
     const coverUri = (item.coverUrl || item.coverUri || '').trim();
     return (
-      <TouchableOpacity style={styles.timelineItem} onPress={() => setSelectedGame(item)}>
-        {coverUri.length > 0 ? (
-          <Image source={{ uri: coverUri }} style={styles.timelineImage} />
-        ) : (
-          <View style={styles.timelineImagePlaceholder}>
-            <Ionicons name="game-controller-outline" size={24} color="#555" />
-          </View>
-        )}
-        <View style={styles.timelineContent}>
-          <View style={styles.timelineHeaderRow}>
-            <Text style={styles.timelineTitle} numberOfLines={2}>{item.title}</Text>
-            {activeTab === 'all' && (
-              <View style={[styles.statusBadge, { borderColor: badge.borderColor }]}>
-                <Text style={[styles.statusBadgeText, { color: badge.color }]}>{badge.label}</Text>
+      <SwipeableLibraryItem
+        item={item}
+        onPress={() => setSelectedGame(item)}
+        onDelete={() => {
+          setSelectedGame(item);
+          setIsConfirmingDelete(true);
+        }}
+        onTogglePriority={() => {
+          const updated = { ...item, priority: !item.priority };
+          onSaveToLibrary(updated);
+        }}
+        onOpenJournal={() => {
+          setSelectedGame(item);
+          setIsJournalModalVisible(true);
+        }}
+      >
+        <View style={[styles.timelineItem, { marginBottom: 0 }]}>
+          {coverUri.length > 0 ? (
+            <Image source={{ uri: coverUri }} style={styles.timelineImage} />
+          ) : (
+            <View style={styles.timelineImagePlaceholder}>
+              <Ionicons name="game-controller-outline" size={24} color="#555" />
+            </View>
+          )}
+          <View style={styles.timelineContent}>
+            <View style={styles.timelineHeaderRow}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1 }}>
+                {item.priority && <Ionicons name="star" size={14} color="#ffd700" style={{ marginRight: 6 }} />}
+                <Text style={styles.timelineTitle} numberOfLines={2}>{item.title}</Text>
               </View>
-            )}
+              {activeTab === 'all' && (
+                <View style={[styles.statusBadge, { borderColor: badge.borderColor }]}>
+                  <Text style={[styles.statusBadgeText, { color: badge.color }]}>{badge.label}</Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.timelineSub} numberOfLines={1}>{item.developer}</Text>
+            <Text style={styles.timelineDate}>Logged {item.loggedAt}</Text>
           </View>
-          <Text style={styles.timelineSub} numberOfLines={1}>{item.developer}</Text>
-          <Text style={styles.timelineDate}>Logged {item.loggedAt}</Text>
         </View>
-      </TouchableOpacity>
+      </SwipeableLibraryItem>
     );
   };
 
@@ -355,7 +381,19 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary, o
             {selectedGame && (
               <>
                 <View style={styles.passportHeader}>
-                  <Text style={styles.passportTitle}>{selectedGame.title || selectedGame.name || 'Untitled Game'}</Text>
+                  <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', paddingRight: 15 }}>
+                    <Text style={[styles.passportTitle, { flexShrink: 1 }]}>{selectedGame.title || selectedGame.name || 'Untitled Game'}</Text>
+                    <TouchableOpacity 
+                      style={{ marginLeft: 10, padding: 5 }}
+                      onPress={() => {
+                        const updated = { ...selectedGame, priority: !selectedGame.priority };
+                        setSelectedGame(updated);
+                        onSaveToLibrary(updated);
+                      }}
+                    >
+                      <Ionicons name={selectedGame.priority ? "star" : "star-outline"} size={22} color={selectedGame.priority ? "#ffd700" : "#888"} />
+                    </TouchableOpacity>
+                  </View>
                   <TouchableOpacity onPress={() => {
                     if (selectedGame) onSaveToLibrary(selectedGame);
                     setSelectedGame(null);
@@ -633,6 +671,7 @@ export const LibraryScreen = ({ library, onSaveToLibrary, onRemoveFromLibrary, o
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
                   {[
                     { id: 'recent', label: 'Recently Added' },
+                    { id: 'priority', label: 'Priority' },
                     { id: 'title', label: 'A-Z' },
                     { id: 'rating', label: 'Top Rated' },
                     { id: 'year', label: 'Newest Release' }

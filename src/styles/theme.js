@@ -42,7 +42,6 @@ export const styles = StyleSheet.create({
   cardContentLayout: { flex: 1, justifyContent: 'flex-end' },
   artImage: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' },
   artPlaceholder: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#111', justifyContent: 'center', alignItems: 'center' },
-  gradientOverlay: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '35%', backgroundColor: 'rgba(0,0,0,0.7)' },
   
   // Score Badge & Buttons
   scoreBadge: { position: 'absolute', top: 15, left: 15, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 0.5, borderColor: '#fff', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, zIndex: 10 },
@@ -50,7 +49,7 @@ export const styles = StyleSheet.create({
   infoFlipButton: { position: 'absolute', top: 15, right: 15, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.4)', paddingVertical: 5, paddingHorizontal: 10, borderRadius: 8, zIndex: 10 },
   infoFlipButtonText: { color: '#fff', fontSize: 11, fontWeight: '500', letterSpacing: 1, textTransform: 'uppercase' },
   
-  cardFooter: { padding: 20, backgroundColor: 'transparent' },
+  cardFooter: { padding: 20, paddingTop: 40, backgroundColor: 'rgba(0,0,0,0.7)' },
   cardTitle: { fontSize: 28, fontWeight: '300', color: '#fff', marginBottom: 6, letterSpacing: 1, textShadow: '1px 1px 5px rgba(0,0,0,0.9)' },
   cardDeveloper: { fontSize: 14, color: '#aaa', marginBottom: 15, fontWeight: '400', letterSpacing: 0.5 },
   footerPillRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', alignItems: 'center' },

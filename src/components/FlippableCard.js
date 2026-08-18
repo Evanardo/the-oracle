@@ -15,7 +15,8 @@ export const FlippableCard = React.memo(({
   opacityUp, 
   opacityDown,
   stackDepth = 0,
-  customStyle
+  customStyle,
+  onTogglePriority
 }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const animatedValue = useRef(new Animated.Value(0)).current;
@@ -75,7 +76,7 @@ export const FlippableCard = React.memo(({
           { transform: [{ rotateY: frontInterpolate }], opacity: frontOpacity }
         ]}
       >
-        <CardContent item={item} onFlip={toggleFlip} />
+        <CardContent item={item} onFlip={toggleFlip} onTogglePriority={onTogglePriority} />
       </Animated.View>
 
       {/* Back Face */}
@@ -102,7 +103,7 @@ export const FlippableCard = React.memo(({
   );
 });
 
-const CardContent = ({ item, onFlip }) => {
+const CardContent = ({ item, onFlip, onTogglePriority }) => {
   const coverUri = (item.coverUrl || item.coverUri || '').trim();
   return (
     <View style={styles.cardContentLayout}>
@@ -113,8 +114,6 @@ const CardContent = ({ item, onFlip }) => {
           <Ionicons name="game-controller-outline" size={48} color="#333" />
         </View>
       )}
-    
-    <View style={styles.gradientOverlay} />
 
     {item.ratingScore ? (
       <View style={styles.scoreBadge}>
@@ -129,6 +128,14 @@ const CardContent = ({ item, onFlip }) => {
     </TouchableOpacity>
     
       <View style={styles.cardFooter}>
+        {onTogglePriority && (
+          <TouchableOpacity onPress={onTogglePriority} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, alignSelf: 'flex-start' }}>
+            <Ionicons name={item.priority ? "star" : "star-outline"} size={16} color={item.priority ? "#ffd700" : "#fff"} />
+            <Text style={{ color: item.priority ? '#ffd700' : '#fff', fontSize: 11, marginLeft: 6, fontWeight: '500', textTransform: 'uppercase', letterSpacing: 1 }}>
+              {item.priority ? "Priority Game" : "Mark as Priority"}
+            </Text>
+          </TouchableOpacity>
+        )}
         <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
         <Text style={styles.cardDeveloper} numberOfLines={1}>
           {item.developer} {item.releaseYear ? `• ${item.releaseYear}` : ''}

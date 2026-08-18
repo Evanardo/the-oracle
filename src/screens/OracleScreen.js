@@ -13,6 +13,7 @@ export const OracleScreen = ({ library, onSaveToLibrary }) => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [rouletteGame, setRouletteGame] = useState(null);
   const [isStarted, setIsStarted] = useState(false);
+  const [isPriorityOnly, setIsPriorityOnly] = useState(false);
 
   const handleConsultOracle = () => {
     setErrorMsg('');
@@ -20,11 +21,11 @@ export const OracleScreen = ({ library, onSaveToLibrary }) => {
     setIsStarted(false);
 
     const candidates = library.filter(
-      game => game.status === source && (!selectedVibe || game.vibe === selectedVibe)
+      game => game.status === source && (!selectedVibe || game.vibe === selectedVibe) && (!isPriorityOnly || game.priority)
     );
 
     if (candidates.length === 0) {
-      setErrorMsg(`The Oracle is silent. You have no ${source} games matching this vibe.`);
+      setErrorMsg(`The Oracle is silent. You have no ${isPriorityOnly ? 'priority ' : ''}${source} games matching this vibe.`);
       return;
     }
 
@@ -140,7 +141,15 @@ export const OracleScreen = ({ library, onSaveToLibrary }) => {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.oracleLabel}>What's the vibe?</Text>
+        <TouchableOpacity 
+          style={{ flexDirection: 'row', alignItems: 'center', marginTop: 20, marginBottom: 10, paddingHorizontal: 5 }}
+          onPress={() => setIsPriorityOnly(!isPriorityOnly)}
+        >
+          <Ionicons name={isPriorityOnly ? "checkbox" : "square-outline"} size={20} color={isPriorityOnly ? "#ffd700" : "#888"} style={{ marginRight: 8 }} />
+          <Text style={{ color: isPriorityOnly ? '#ffd700' : '#888', fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Focus on Priority Games Only</Text>
+        </TouchableOpacity>
+
+        <Text style={[styles.oracleLabel, { marginTop: 15 }]}>What's the vibe?</Text>
         <View style={styles.vibeGrid}>
           {VIBES.map(vibe => (
             <TouchableOpacity 

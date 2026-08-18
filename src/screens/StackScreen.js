@@ -47,6 +47,10 @@ export const StackScreen = ({ library, isLoaded = true, onSaveToLibrary, onRemov
     setLoading(false);
   };
 
+  const togglePriority = (gameId) => {
+    setGamesStack(prevStack => prevStack.map(g => g.id === gameId ? { ...g, priority: !g.priority } : g));
+  };
+
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -219,6 +223,7 @@ export const StackScreen = ({ library, isLoaded = true, onSaveToLibrary, onRemov
           opacityUp={opacityUp}
           opacityDown={opacityDown}
           stackDepth={relIndex}
+          onTogglePriority={() => togglePriority(item.id)}
         />
       );
     }).reverse();
